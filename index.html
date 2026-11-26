@@ -116,6 +116,7 @@ h3{font-family:var(--f-display);font-weight:500;font-size:17px;margin:0}
 @media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .meter{display:grid;gap:4px}
 .meter .v{font-family:var(--f-display);font-weight:500;font-size:16px;line-height:1.2;min-height:2.4em;display:flex;align-items:flex-end}
+@media (max-width:520px){.readout{row-gap:20px;column-gap:16px}.meter{gap:3px}.meter .v{min-height:0}}
 .bar{height:6px;background:var(--line);border-radius:3px;position:relative;overflow:hidden}
 .bar i{position:absolute;top:0;bottom:0;background:var(--accent)}
 .bar.mid::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted)}
