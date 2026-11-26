@@ -214,7 +214,6 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
         <a class="btn ghost" id="toLinkedIn" target="_blank" rel="noopener">LinkedIn</a>
         <a class="btn ghost" id="toFacebook" target="_blank" rel="noopener">Facebook</a>
         <a class="btn ghost" id="toWhatsApp" target="_blank" rel="noopener">WhatsApp</a>
-        <button class="btn ghost" id="moreShare" type="button" hidden>More options</button>
         <p class="sharenote">X, LinkedIn, Facebook and WhatsApp share the link. To post the picture, copy or save it and add it to your post. For Instagram, save it and post from your phone.</p>
       </div>
       <p class="sharenote" id="shareNote" hidden></p>
@@ -584,13 +583,12 @@ setLinks();
 el("shareNative").onclick=async()=>{track("share-tap-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");
   let canFiles=false;try{canFiles=!!(navigator.canShare&&navigator.canShare({files:[await cardFile()]}));}catch(e){}
   if(canFiles&&touch()){try{await nativeShare();return;}catch(e){if(e&&e.name==="AbortError")return;}}
-  el("moreShare").hidden=!canFiles;el("shareMenu").hidden=!el("shareMenu").hidden;};
-el("moreShare").onclick=async()=>{try{await nativeShare();}catch(e){if(!(e&&e.name==="AbortError"))shareNote("Your browser couldn't open its share menu. Use one of the options above.");}};
+  el("shareMenu").hidden=!el("shareMenu").hidden;};
 el("copyImg").onclick=async()=>{track("copy-image");try{const b=await cardBlob();await navigator.clipboard.write([new ClipboardItem({"image/png":b})]);shareNote("Image copied. Paste it into your post.");}
   catch(e){shareNote("This browser can't copy images. Use Save image instead.");}};
 el("shareSave").onclick=async()=>{track("save-image-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");
   try{const b=await cardBlob();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="my-attention-map.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
-    shareNote(touch()?"Saved. If your phone didn't save it, press and hold the image and choose Save.":"Saved to your downloads as my-attention-map.png.");}
+    shareNote(touch()?"Saved. If your phone didn't save it, press and hold the image and choose Save.":"Saved to your downloads.");}
   catch(e){shareNote("Couldn't save here. Right-click the image and choose Save image as.");}};
 const un=el("userName");un.value=state.userName||"";un.oninput=()=>{state.userName=un.value;save();drawCard();};
 document.querySelectorAll(".sharehead .chip").forEach(b=>b.onclick=()=>{cardFmt=b.dataset.f;document.querySelectorAll(".sharehead .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));drawCard();});
