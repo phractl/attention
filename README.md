@@ -2,7 +2,7 @@
 
 A Phractl self-check: map the tasks, people and places in your week by focus, drive and freedom, see which zone each one falls in, get practical moves, and share your map as an image.
 
-- Live: https://attention.phractl.com (also reachable from phractl.com/attention once the redirect is set up)
+- Live: https://attentioneconomix.com (www and phractl.com/attention redirect here once set up)
 - One self-contained file: `index.html`. No build step, no backend. Answers stay in the visitor's browser.
 - `og-image.png` is the link-preview image.
 

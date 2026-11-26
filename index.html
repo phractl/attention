@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Attention Map · Phractl</title>
 <meta name="description" content="Map the tasks, people and places that take your attention, see which ones drain you, and get practical moves to fix it.">
-<link rel="canonical" href="https://attention.phractl.com/">
+<link rel="canonical" href="https://attentioneconomix.com/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://attention.phractl.com/">
+<meta property="og:url" content="https://attentioneconomix.com/">
 <meta property="og:title" content="Who's spending your attention?">
 <meta property="og:description" content="Map the tasks, people and places in your week. Find your sweet spots, your energy drains and your pain in the arse.">
-<meta property="og:image" content="https://attention.phractl.com/og-image.png">
+<meta property="og:image" content="https://attentioneconomix.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -502,7 +502,7 @@ el("clearBtn").onclick=()=>{state.tasks.forEach(t=>t.ans=[null,null,null,null,nu
 let cardFmt="post";
 const CARD={bg:"#EDF0EE",surface:"#F8FAF9",ink:"#15212A",muted:"#5B6870",line:"#CCD5D2",task:"#1F4FD8",person:"#C2366F",place:"#11806A",warm:"#C77A0A"};
 const FONT_D='"Bricolage Grotesque", "Segoe UI", sans-serif',FONT_B='"IBM Plex Sans", system-ui, sans-serif',FONT_M='"IBM Plex Mono", monospace';
-const SITE="phractl.com/attention";
+const SITE="attentioneconomix.com";
 function fitText(ctx,t,w){if(ctx.measureText(t).width<=w)return t;while(t.length>1&&ctx.measureText(t+"…").width>w)t=t.slice(0,-1);return t+"…";}
 function drawCard(){
   const cv=el("card"),ctx=cv.getContext("2d"),Wd=1080,Ht=cardFmt==="story"?1920:1350;cv.width=Wd;cv.height=Ht;
