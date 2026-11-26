@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Attention Map · Phractl</title>
+<meta name="description" content="Map the tasks, people and places that take your attention, see which ones drain you, and get practical moves to fix it.">
+<link rel="canonical" href="https://attention.phractl.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://attention.phractl.com/">
+<meta property="og:title" content="Who's spending your attention?">
+<meta property="og:description" content="Map the tasks, people and places in your week. Find your sweet spots, your energy drains and your pain in the arse.">
+<meta property="og:image" content="https://attention.phractl.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#15212A">
+<style>html{-webkit-text-size-adjust:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: instrument panel. Questions on the left, a live map of the task on the right, a summary strip below. */
+:root{
+  --bg:#EDF0EE; --surface:#F8FAF9; --ink:#15212A; --muted:#5B6870; --line:#CCD5D2;
+  --accent:#1F4FD8; --accent-soft:#DCE5FB; --warm:#C77A0A; --warm-soft:#F6E7CC;
+  --bench:#8A979E; --people:#C2366F; --people-soft:#F8DDE8; --place:#11806A; --place-soft:#D4EEE7; --drain:#B43C3C;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F161B; --surface:#172129; --ink:#E4EBEE; --muted:#93A2AA; --line:#2B3943;
+  --accent:#7C9CFF; --accent-soft:#1E2B4D; --warm:#F0A93A; --warm-soft:#3A2A10;
+  --bench:#6E7E87; --people:#F27BA8; --people-soft:#4A1E30; --place:#4FCFAE; --place-soft:#143A31; --drain:#EB7A7A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F161B; --surface:#172129; --ink:#E4EBEE; --muted:#93A2AA; --line:#2B3943;
+  --accent:#7C9CFF; --accent-soft:#1E2B4D; --warm:#F0A93A; --warm-soft:#3A2A10;
+  --bench:#6E7E87; --people:#F27BA8; --people-soft:#4A1E30; --place:#4FCFAE; --place-soft:#143A31; --drain:#EB7A7A; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:28px}
+header{display:grid;gap:10px}
+.brand{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,5vw,52px);line-height:1.02;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:62ch;color:var(--muted);margin:0;font-size:16px}
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:500;font-size:17px;margin:0}
+.label{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+.tasks{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.chip .dot{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.chip.done .dot{background:var(--accent)}
+.chip.person.done .dot{background:var(--people)}
+.chip.person[aria-pressed="true"]{border-color:var(--people);background:var(--people-soft)}
+.addform input.person{border-color:color-mix(in srgb,var(--people) 50%,var(--line))}
+.kdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;background:var(--accent)}.kdot.person{background:var(--people)}.kdot.place{background:var(--place)}
+.chip.place.done .dot{background:var(--place)}
+.chip.place[aria-pressed="true"]{border-color:var(--place);background:var(--place-soft)}
+.brk{flex-basis:100%;height:0}
+.adder{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px dashed var(--line);border-radius:999px;padding:3px 3px 3px 4px}
+.adder .kinds{display:inline-flex;gap:2px}
+.adder .kinds button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--muted);padding:5px 10px;border-radius:999px;cursor:pointer}
+.adder .kinds button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.adder input{font:inherit;font-size:14px;border:0;background:transparent;color:var(--ink);padding:6px 6px;width:190px;min-width:0}
+.adder .btn{border-radius:999px;padding:6px 14px}
+.chip .sel,.chip .x{font:inherit;border:0;background:transparent;color:inherit;cursor:pointer;padding:0;display:inline-flex;gap:8px;align-items:center}
+.chip .x{color:var(--muted);font-size:15px;padding:0 2px;border-radius:50%}
+.chip .x:hover{color:var(--ink)}
+.addform{display:inline-flex;gap:6px}
+.addform input{font:inherit;font-size:14px;border:1px dashed var(--line);background:transparent;color:var(--ink);padding:7px 12px;border-radius:999px;width:170px}
+.btn{font:inherit;font-size:14px;font-weight:600;border:0;border-radius:8px;padding:9px 14px;cursor:pointer;background:var(--accent);color:var(--surface)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.notice{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;background:var(--warm-soft);border-radius:10px;padding:10px 14px;font-size:14px}
+.notice strong{color:var(--warm)}
+
+.panel{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.panel{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:18px;min-width:0}
+
+.q{display:grid;gap:8px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.q:last-of-type{border-bottom:0;padding-bottom:0}
+.q p{margin:0;font-size:15px}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.scale input{position:absolute;opacity:0;pointer-events:none}
+.scale label{display:flex;align-items:center;justify-content:center;text-align:center;font-size:13px;line-height:1.2;padding:8px 2px;min-height:40px;border:1px solid var(--line);border-radius:6px;cursor:pointer;color:var(--muted)}
+.scale input:checked+label{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.scale input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.nav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+
+.map svg{width:100%;height:auto;display:block}
+.map text{font-family:var(--f-mono);fill:var(--muted);font-size:11px}
+.map .quad{font-family:var(--f-display);font-size:13px;fill:var(--muted);opacity:.85}
+.hit{cursor:pointer}
+.mapsel{font-family:var(--f-display);font-weight:500;font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.sw{width:12px;height:12px;border-radius:50%;display:inline-block}
+
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.meter{display:grid;gap:4px}
+.meter .v{font-family:var(--f-display);font-weight:500;font-size:16px;line-height:1.2;min-height:2.4em;display:flex;align-items:flex-end}
+.bar{height:6px;background:var(--line);border-radius:3px;position:relative;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0;background:var(--accent)}
+.bar.mid::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted)}
+.insights{margin:0;padding-left:18px;display:grid;gap:6px}
+.insights li{max-width:62ch}
+
+.summary{display:grid;gap:16px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.pill{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--ink);white-space:nowrap}
+.pill.drain{background:color-mix(in srgb,var(--drain) 18%,transparent)}
+.pill.pain{background:var(--people);color:var(--surface)}
+.pill.pull{background:var(--warm-soft)}
+.seg{display:inline-flex;gap:6px}
+.toggle{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+.movebox{display:grid;gap:8px}.movebox:empty{display:none}
+.moves{margin:0;padding-left:20px;display:grid;gap:8px}.moves li{max-width:62ch}.moves li::marker{color:var(--accent);font-family:var(--f-mono)}
+.map .movebox{border-top:1px solid var(--line);padding-top:16px}
+.share{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:18px}
+.sharehead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.sharehead .kinds{display:inline-flex;gap:6px}
+#card{width:100%;max-width:360px;height:auto;border-radius:10px;border:1px solid var(--line);display:block}
+.sharenote{margin:0;font-size:13px;color:var(--muted);max-width:60ch}
+footer a{color:var(--ink)}
+footer{color:var(--muted);font-size:13px;max-width:70ch}
+@media (prefers-reduced-motion:no-preference){.pt{transition:cx .35s ease,cy .35s ease,r .35s ease}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">phractl · attention map</div>
+    <h1>Where does your <em>attention</em> actually go?</h1>
+    <p class="lede">Add the tasks, people and places that fill your week, and answer six quick statements about each. You'll see how much focus each one takes, whether it brings you pleasure or pressure, and whether you chose it or it chose you.</p>
+  </header>
+
+  <section class="card" aria-labelledby="t-tasks">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+      <h2 id="t-tasks">Your tasks, people and places</h2>
+    </div>
+    <div class="tasks" id="tasks"></div>
+    <div class="notice" id="exampleNote">
+      <span><strong>Example answers loaded.</strong> These are sample answers so you can see how the map works.</span>
+      <button class="btn ghost" id="clearBtn" type="button">Clear and start my own</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="card" aria-labelledby="t-q">
+      <div style="display:grid;gap:4px">
+        <span class="label" id="qStep">Task 1 of 4</span>
+        <h2 id="t-q">Think about the time you spend <span id="qPrep">on</span> <span id="qTask">deep work</span>.</h2>
+      </div>
+      <div id="questions" style="display:grid;gap:16px"></div>
+      <div class="nav">
+        <button class="btn ghost" id="prevBtn" type="button">Previous</button>
+        <button class="btn" id="nextBtn" type="button">Next</button>
+      </div>
+    </div>
+
+    <div class="card map" aria-labelledby="t-map">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+        <h2 id="t-map">Your attention map</h2>
+      </div>
+      <svg id="map" viewBox="0 0 420 430" role="img" aria-label="Map of tasks by motivation and liberty"></svg>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--accent)"></i>Tasks</span>
+        <span><i class="sw" style="background:var(--people)"></i>People</span>
+        <span><i class="sw" style="background:var(--place)"></i>Places</span>
+        <span>Tap a circle to open it</span>
+        <span>Bigger circle = more focus</span>
+      </div>
+      <div class="mapsel" id="mapSel"></div>
+      <div class="readout" id="readout"></div>
+      <ul class="insights" id="insights"></ul>
+      <div class="movebox" id="moves"></div>
+    </div>
+  </section>
+
+  <section class="card summary" aria-labelledby="t-sum">
+    <h2 id="t-sum">Your week at a glance</h2>
+    <div class="tablewrap"><table id="sumTable"></table></div>
+    <ul class="insights" id="weekInsights"></ul>
+    <div class="movebox" id="plan"></div>
+    <div class="share">
+      <div class="sharehead">
+        <h3>Share your map</h3>
+        <div class="kinds" role="group" aria-label="Image size"><button type="button" class="chip" data-f="post" aria-pressed="true">Post 4:5</button><button type="button" class="chip" data-f="story" aria-pressed="false">Story 9:16</button></div>
+      </div>
+      <canvas id="card" aria-label="Shareable image of your attention map"></canvas>
+      <div class="nav" style="justify-content:flex-start">
+        <button class="btn" id="shareNative" type="button">Share</button>
+        <button class="btn ghost" id="shareSave" type="button">Save image</button>
+      </div>
+      <p class="sharenote" id="shareNote" hidden></p>
+    </div>
+  </section>
+
+  <footer>How it works: every statement nudges one of three scores, focus, drive or freedom. Mental load adds up how hard a task, person or place pulls on you, whichever way it pulls. Your answers stay on this device.<br><br>A Phractl tool. More on attention, systems and growth at <a href="https://phractl.com" target="_blank" rel="noopener">phractl.com</a>.</footer>
+</div>
+
+<script>
+const ITEMS=[
+  {k:"front", t:"I give this my full focus.", p:"I give them my full attention.", l:"I'm fully focused when I'm there."},
+  {k:"attr",  t:"I enjoy doing this.", p:"I enjoy my time with them.", l:"I enjoy being there."},
+  {k:"capt",  t:"I have to do this, like it or not.", p:"I have to deal with them, like it or not.", l:"I have to be there, like it or not."},
+  {k:"aver",  t:"Things go wrong for me if I let this slip.", p:"Things go wrong for me if I don't keep them happy.", l:"Things go wrong for me if I'm not there."},
+  {k:"back",  t:"I can do this on autopilot.", p:"I can deal with them on autopilot.", l:"I'm on autopilot when I'm there."},
+  {k:"vol",   t:"I do this because I choose to.", p:"I spend time with them because I choose to.", l:"I go there because I choose to."}
+];
+const isP=t=>t.kind==="person";
+const verb=n=>/\band\b|&/i.test(n)||(/s$/i.test(n)&&!/(ss|us|is)$/i.test(n))?"are":"is";
+const isL=t=>t.kind==="place";
+const isT=t=>!isP(t)&&!isL(t);
+const kindOf=t=>isP(t)?"person":isL(t)?"place":"task";
+const colOf=t=>isP(t)?"var(--people)":isL(t)?"var(--place)":"var(--accent)";
+const nm=t=>!isT(t)?t.name.replace(/^(My|A|An|The) /,m=>m.toLowerCase()):t.name.toLowerCase();
+const SCALE=["Not at all","A little","Somewhat","Mostly","Completely"];
+const PROFILES={
+  general:{label:"Everyone",tasks:[
+    {id:"deep",name:"Deep work",phrase:"doing focused, deep work"},
+    {id:"meetings",name:"Meetings",phrase:"in meetings"},
+    {id:"email",name:"Email and messages",phrase:"dealing with email and messages"},
+    {id:"gadmin",name:"Admin",phrase:"doing admin"}],people:[
+    {id:"pman",name:"My manager"},{id:"pfriend",name:"A close friend"},{id:"pcol",name:"A difficult colleague"}],places:[
+    {id:"loffice",name:"The office"},{id:"lhome",name:"Home"}]}
+};
+const EXAMPLE={deep:[5,4,2,2,2,5],meetings:[3,4,4,3,2,2],email:[2,1,4,4,4,2],gadmin:[3,2,5,4,2,1],
+  pman:[4,3,5,3,2,2],pfriend:[5,5,1,2,2,5],pcol:[4,1,5,5,2,1],loffice:[3,5,4,2,2,2],lhome:[3,4,2,3,3,4]};
+const freshTasks=(p,ex)=>[...PROFILES[p].tasks.map(t=>({...t,kind:"task"})),...PROFILES[p].people.map(t=>({...t,kind:"person"})),...PROFILES[p].places.map(t=>({...t,kind:"place"}))].map(t=>({...t,ans:ex?[...EXAMPLE[t.id]]:[null,null,null,null,null,null]}));
+
+let state={profile:"general",tasks:freshTasks("general",true),cur:0,example:true};
+try{const s=JSON.parse(localStorage.getItem("ascape3")||"null");if(s&&s.tasks&&s.tasks.length&&s.profile)state=s;}catch(e){}
+const OLD_ACADEMIC=["research","writing","teaching","admin","pstud","phod","pcoau","lcampus","llib"];
+if(state.profile!=="general"){state.profile="general";if(!state.example)state.tasks=state.tasks.filter(t=>!OLD_ACADEMIC.includes(t.id));}
+if(!state.tasks.length){state.tasks=freshTasks("general",true);state.example=true;}
+if(state.example){state.tasks=freshTasks(state.profile,true);state.cur=Math.min(state.cur,state.tasks.length-1);}
+const save=()=>{try{localStorage.setItem("ascape3",JSON.stringify(state))}catch(e){}};
+
+function dims(a){ // a: centred item values keyed by k
+  const C=a.front-a.back, M=a.attr-a.aver, L=a.vol-a.capt;
+  return {C,M,L,A:Math.abs(C)+Math.abs(M)+Math.abs(L)};
+}
+function taskDims(t){
+  if(t.ans.some(v=>v==null))return null;
+  const a={};ITEMS.forEach((it,i)=>a[it.k]=t.ans[i]-3);return dims(a);
+}
+const WORDS={C:["Autopilot","Partly autopilot","In between","Mostly focused","Full focus"],M:["Pure pressure","Mostly pressure","Mixed","Mostly pleasure","Pure pleasure"],L:["A have-to","Mostly a have-to","Half and half","Mostly your choice","Your choice"]};
+const word=(k,v)=>WORDS[k][v<=-2?0:v<=-0.75?1:v<0.75?2:v<2?3:4];
+const loadWord=a=>a<4?"Light":a<8?"Medium":"Heavy";
+const fmt=v=>(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(1);
+const MOVES={
+  "Sweet spot":[
+    ["Give it your best hours","Put it where your energy peaks and guard that time like a meeting you can't move."],
+    ["Close the doors","Turn off notifications and shut email for the session. Getting back into flow after an interruption costs more than it feels."],
+    ["Spot the ingredients","Notice what makes it work: the people, the place, the kind of problem. Bring those into other tasks."],
+    ["Keep it yours","If deadlines and obligations start piling onto it, it can slide into a have-to. Keep some of it just for you."]],
+  "Worthwhile duty":[
+    ["Get ahead of deadlines","Pressure is what spoils tasks you enjoy. Plan the key dates early so it doesn't get rushed."],
+    ["Take back some choice","Ask for a say in how or when you do it. More choice moves it towards your sweet spot."],
+    ["Define good enough","Decide what done looks like, so a task you like doesn't quietly take over the week."],
+    ["Remember why you like it","Start sessions with the part you enjoy most to build momentum."]],
+  "Self-made pressure":[
+    ["Ask if you still need it","You chose it, so you can un-choose it. Check it still serves what you want."],
+    ["Lower the bar","Find the version that's good enough. Self-imposed standards are often the real pressure."],
+    ["Make it more enjoyable","Pair it with something or someone you like, or change where you do it."],
+    ["Set a review date","Give it a month, then decide on purpose whether to keep going."]],
+  "Energy drain":[
+    ["Batch it","Give it one or two fixed slots a week so it stops leaking into the rest of your days."],
+    ["Shrink it","Use templates, checklists and shorter meetings, or automate it."],
+    ["Hand it on or say no","Look for what you can delegate, decline or renegotiate."],
+    ["Keep it out of your best hours","Do it when your energy is low, and save your peak time for the work you enjoy."]]
+};
+const MOVES_P={
+  "Sweet spot":[
+    ["Make regular time for them","Put something in the diary. Good relationships fade quietly when everything else is urgent."],
+    ["Be fully there","Phone away, laptop shut. Undivided attention is what makes the time count."],
+    ["Tell them","Let them know they make your week better. It strengthens what you already have."],
+    ["Keep it free of obligation","Don't let favours and logistics take over the time you spend together."]],
+  "Worthwhile duty":[
+    ["Set a rhythm","Short, regular check-ins stop things piling up into stressful moments."],
+    ["Agree how you work together","Talk about when and how you're best reached. More say on your side moves it towards your sweet spot."],
+    ["Be clear about limits","Say what you can and can't take on, early and kindly."],
+    ["Remember what you value in them","Start with the part of the relationship you enjoy."]],
+  "Self-made pressure":[
+    ["Ask what you get from it","You keep this going yourself. Check it still gives you something back."],
+    ["Stop trying to please","Pressure here often comes from your own expectations, not theirs."],
+    ["Change the setting","Meet somewhere else, in a group, or for less time, and see if it feels lighter."],
+    ["Step back gently","It's fine to see someone less. Fade it out rather than forcing it."]],
+  "Pain in the arse":[
+    ["Limit the exposure","Fewer, shorter contact points. Move what you can to email or messages, where you control the timing."],
+    ["Don't take the bait","Decide in advance how you'll respond, and keep it calm and factual."],
+    ["Write it down","Keep brief notes of what was agreed. If things escalate, you'll have facts, not feelings."],
+    ["Get backup","Talk to a manager, a colleague or a friend. You don't have to handle them alone."]],
+  "Energy drain":[
+    ["Set boundaries","Decide when and how they can reach you, and stick to it."],
+    ["Keep it short and structured","Use an agenda, a time limit or a clear purpose for each conversation."],
+    ["Bring someone else in","Share the load with a colleague, or go through a third person where it makes sense."],
+    ["Keep them out of your best hours","Deal with them when your energy is lower, and protect your peak time."]]
+};
+const MOVES_L={
+  "Sweet spot":[
+    ["Save it for what matters","Take your most important work, or your best conversations, there."],
+    ["Make it a ritual","Go at a regular time so your mind settles faster when you arrive."],
+    ["Notice what works","The light, the noise, the people around you. Recreate it in places that drain you."],
+    ["Keep it special","Don't fill it with admin and errands, or it stops working."]],
+  "Worthwhile duty":[
+    ["Go with a plan","Decide what you'll get done there before you arrive."],
+    ["Make it yours","Headphones, a favourite spot, a plant. Small things that give you some control."],
+    ["Negotiate the when","Ask for more say over which days or hours you're there."],
+    ["Use the in-between","Turn the journey there into time that's yours: a podcast, a walk, quiet."]],
+  "Self-made pressure":[
+    ["Ask why you go","Check it still gives you what you went there for."],
+    ["Try somewhere else","A different place for the same thing can lift the pressure."],
+    ["Go less often","Keep the visits that matter and drop the ones that are habit."],
+    ["Change how you use it","Go at quieter times or for shorter stretches."]],
+  "Energy drain":[
+    ["Cut the time there","Go less, leave on time, and work from elsewhere when you can."],
+    ["Bring your own bubble","Headphones, a short reset routine, a corner you claim."],
+    ["Do easy work there","Save your deep work for places that give you energy."],
+    ["Recover afterwards","Build in a walk or a quiet moment before your next thing."]]
+};
+function zone(d,t){
+  if(t&&isP(t)&&d.M<=-2&&d.L<=-2&&d.C>=0.75)return{n:"Pain in the arse",c:"pain",tipP:"You can't avoid them, they bring you mostly pressure, and they still demand your attention. The costliest kind of relationship in your week."};
+  if(d.L>=0&&d.M>=0)return{n:"Sweet spot",c:"",tipL:"You choose to be there and you enjoy it. Places like this restore your attention.",tipP:"You choose to spend time with them and you enjoy it. These are the people who give you energy.",tip:"You chose it and you enjoy it. This is where your attention pays you back."};
+  if(d.L<0&&d.M>=0)return{n:"Worthwhile duty",c:"pull",tipL:"You like it there, but you don't get to choose when you go.",tipP:"You get on, but you can't opt out. Pressure from outside can strain it.",tip:"You enjoy it, but it isn't optional. Deadlines can turn it into pressure."};
+  if(d.L>=0&&d.M<0)return{n:"Self-made pressure",c:"pull",tipL:"You choose to go there, but it mostly feels like pressure.",tipP:"You keep this relationship going yourself, but it mostly feels like pressure.",tip:"You took it on yourself, and it mostly feels like pressure."};
+  return{n:"Energy drain",c:"drain",tipL:"You have to be there and it feels like pressure. It wears your attention down.",tipP:"You have to deal with them and it feels like pressure. It uses up attention you'd rather give elsewhere.",tip:"You have to do it and it feels like pressure. It uses up attention you'd rather spend elsewhere."};
+}
+const el=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function renderTasks(){
+  const box=el("tasks");box.innerHTML="";
+  state.tasks.forEach((t,i)=>{
+    const w=document.createElement("span");w.className="chip "+kindOf(t)+(taskDims(t)?" done":"");w.setAttribute("aria-pressed",i===state.cur);
+    w.innerHTML=`<button type="button" class="sel" aria-pressed="${i===state.cur}"><i class="dot"></i>${esc(t.name)}</button>`+(state.tasks.length>1?`<button type="button" class="x" aria-label="Remove ${esc(t.name)}">×</button>`:"");
+    w.querySelector(".sel").onclick=()=>{state.cur=i;render();};
+    const x=w.querySelector(".x");if(x)x.onclick=()=>{state.tasks.splice(i,1);state.example=false;state.cur=Math.min(state.cur,state.tasks.length-1);render();};
+    box.appendChild(w);
+  });
+  const PH={task:"e.g. Email",person:"e.g. My partner",place:"e.g. The gym"};
+  const ak=state.addKind||"task";
+  const f=document.createElement("form");f.className="adder";
+  f.innerHTML=`<span class="kinds" role="group" aria-label="What are you adding?">${["task","person","place"].map(k=>`<button type="button" data-k="${k}" aria-pressed="${k===ak}">${k[0].toUpperCase()+k.slice(1)}</button>`).join("")}</span><input id="newItem" placeholder="Add a ${ak}, ${PH[ak]}" maxlength="40" aria-label="Name"><button class="btn" type="submit">Add</button>`;
+  f.querySelectorAll(".kinds button").forEach(b=>b.onclick=()=>{state.addKind=b.dataset.k;const v=f.querySelector("input").value;renderTasks();const n=el("newItem");n.value=v;n.focus();});
+  f.onsubmit=e=>{e.preventDefault();const v=f.querySelector("input").value.trim();if(!v)return;
+    state.example=false;state.tasks.push({id:"c"+Date.now(),kind:ak,name:v,ans:[null,null,null,null,null,null]});state.cur=state.tasks.length-1;render();};
+  box.prepend(Object.assign(document.createElement("div"),{className:"brk"}));box.prepend(f);
+  el("exampleNote").hidden=!state.example;
+}
+function renderQuestions(){
+  const t=state.tasks[state.cur];
+  el("qStep").textContent=`${{task:"Task",person:"Person",place:"Place"}[kindOf(t)]} · ${state.cur+1} of ${state.tasks.length}`;
+  el("qPrep").textContent=isP(t)?"with":isL(t)?"at":"on";
+  el("qTask").textContent=nm(t);
+  const q=el("questions");q.innerHTML="";
+  ITEMS.forEach((it,i)=>{
+    const d=document.createElement("div");d.className="q";
+    const tx=isP(t)?it.p:isL(t)?it.l:it.t;let s=`<p>${tx}</p><div class="scale" role="radiogroup" aria-label="${tx}">`;
+    for(let v=1;v<=5;v++){const id=`q${i}v${v}`;s+=`<input type="radio" name="q${i}" id="${id}" value="${v}" ${t.ans[i]===v?"checked":""}><label for="${id}">${SCALE[v-1]}</label>`;}
+    s+=`</div>`;
+    d.innerHTML=s;
+    d.querySelectorAll("input").forEach(r=>r.onchange=()=>{t.ans[i]=+r.value;state.example=false;el("exampleNote").hidden=true;renderMap();renderTasks();renderSummary();save();});
+    q.appendChild(d);
+  });
+  el("prevBtn").disabled=state.cur===0;
+  el("nextBtn").textContent=state.cur===state.tasks.length-1?"See my week":"Next";
+}
+
+const W=420,P=40,PT=34,span=W-2*P,H=PT+span+56,sx=v=>P+(v+4.7)/9.4*span,sy=v=>PT+(4.7-v)/9.4*span,rad=C=>5+(C+4)*1.9,BOT=PT+span;
+const short=n=>n.length>16?n.slice(0,15)+"…":n;
+function placeLabels(labs){
+  const boxes=[];let out="";
+  const hit=(b)=>boxes.some(o=>b.x1<o.x2&&b.x2>o.x1&&b.y1<o.y2&&b.y2>o.y1);
+  labs.forEach(l=>{
+    const w=l.t.length*6.7+4,x=Math.min(Math.max(l.x,P+w/2+2),W-P-w/2-2);
+    const tries=[l.y+l.r+12,l.y-l.r-4,l.y+l.r+25,l.y-l.r-17,l.y+4];
+    let y=tries.find(ty=>{const b={x1:x-w/2,x2:x+w/2,y1:ty-10,y2:ty+3};return ty>PT+10&&ty<BOT-2&&!hit(b);});
+    if(y===undefined)y=tries[0];
+    boxes.push({x1:x-w/2,x2:x+w/2,y1:y-10,y2:y+3});
+    out+=`<text class="hit" data-i="${l.i}" x="${x}" y="${y}" text-anchor="middle" style="${l.bold?"fill:var(--ink);font-weight:600":""}">${esc(l.t)}</text>`;
+  });
+  return out;
+}
+function renderMap(){
+  const svg=el("map");const cur=state.tasks[state.cur];
+  let g=`<rect x="${P}" y="${PT}" width="${span}" height="${span}" fill="none" stroke="var(--line)"/>`;
+  for(let v=-4;v<=4;v++){
+    const w=v===0?1.4:.6,o=v===0?1:.6;
+    g+=`<line x1="${sx(v)}" y1="${PT}" x2="${sx(v)}" y2="${BOT}" stroke="var(--line)" stroke-width="${w}" opacity="${o}"/>`;
+    g+=`<line x1="${P}" y1="${sy(v)}" x2="${W-P}" y2="${sy(v)}" stroke="var(--line)" stroke-width="${w}" opacity="${o}"/>`;
+  }
+  g+=`<text class="quad" x="${P}" y="${PT-10}">Self-made pressure</text>`;
+  g+=`<text class="quad" x="${W-P}" y="${PT-10}" text-anchor="end">Sweet spot</text>`;
+  g+=`<text class="quad" x="${P}" y="${BOT+18}">Energy drain</text>`;
+  g+=`<text class="quad" x="${W-P}" y="${BOT+18}" text-anchor="end">Worthwhile duty</text>`;
+  if(state.tasks.some(isP)){g+=`<rect x="${sx(-4.7)}" y="${sy(-2)}" width="${sx(-2)-sx(-4.7)}" height="${sy(-4.7)-sy(-2)}" fill="var(--people)" fill-opacity=".08" stroke="var(--people)" stroke-opacity=".5" stroke-dasharray="4 3"/>`;
+    g+=`<text class="quad" transform="translate(${P-7} ${(sy(-2)+BOT)/2}) rotate(-90)" text-anchor="middle" style="fill:var(--people);font-size:12px;font-weight:600">Pain in the arse</text>`;}
+  g+=`<text x="${W/2}" y="${H-6}" text-anchor="middle">pressure ← DRIVE → pleasure</text>`;
+  g+=`<text transform="translate(12 ${PT+span/2}) rotate(-90)" text-anchor="middle">have to ← FREEDOM → choose to</text>`;
+  const labs=[];
+  state.tasks.forEach((t,i)=>{const d=taskDims(t);if(!d||i===state.cur)return;
+    const c=colOf(t);g+=`<circle class="pt hit" data-i="${i}" cx="${sx(d.M)}" cy="${sy(d.L)}" r="${rad(d.C)}" fill="${c}" fill-opacity=".16" stroke="${c}" stroke-opacity=".7"><title>${esc(t.name)}</title></circle>`;
+    labs.push({i,x:sx(d.M),y:sy(d.L),r:rad(d.C),t:short(t.name),bold:false});});
+  const d=taskDims(cur);
+  if(d)labs.unshift({i:state.cur,x:sx(d.M),y:sy(d.L),r:rad(d.C),t:short(cur.name),bold:true});
+  if(d){g+=`<circle class="pt" cx="${sx(d.M)}" cy="${sy(d.L)}" r="${rad(d.C)}" fill="${colOf(cur)}" fill-opacity=".9"><title>${esc(cur.name)}</title></circle>`;
+}
+  g+=placeLabels(labs);
+  svg.innerHTML=g;
+  svg.querySelectorAll(".hit").forEach(c=>c.onclick=()=>{state.cur=+c.dataset.i;render();});
+  el("mapSel").textContent=taskDims(cur)?`Showing: ${cur.name}`:"";
+  // readout
+  const r=el("readout");
+  if(!d){r.innerHTML=`<p style="grid-column:1/-1;margin:0;color:var(--muted)">Answer all six statements to place ${esc(cur.name)} on the map.</p>`;el("insights").innerHTML="";el("moves").innerHTML="";return;}
+  const m=(lab,v,max,mid)=>`<div class="meter"><span class="label">${mid?["","Focus","Drive","Freedom"][mid]:"Mental load"}</span><span class="v">${lab}</span><div class="bar ${mid?"mid":""}"><i style="${mid?(v>=0?`left:50%;width:${v/8*100}%`:`left:${50+v/8*100}%;width:${-v/8*100}%`):`left:0;width:${v/max*100}%`}"></i></div></div>`;
+  r.innerHTML=m(word("C",d.C),d.C,4,1)+m(word("M",d.M),d.M,4,2)+m(word("L",d.L),d.L,4,3)+m(loadWord(d.A),d.A,12,0);
+  el("insights").innerHTML=insightsFor(cur,d).map(s=>`<li>${s}</li>`).join("");
+  renderMoves(cur,d);
+}
+function insightsFor(t,d){
+  const out=[],z=zone(d,t),n=esc(t.name);
+  out.push(`${n} ${verb(t.name)} in your <strong>${z.n.toLowerCase()}</strong> zone${d.C<0?(isP(t)?", and you mostly deal with them on autopilot":isL(t)?", and you're mostly on autopilot there":", and you mostly do it on autopilot"):""}.`);
+  out.push(isP(t)?z.tipP:isL(t)?z.tipL:z.tip);
+  return out;
+}
+function movesFor(d,t){
+  const z=zone(d,t);
+  if(t&&isL(t)){const m=[...MOVES_L[z.n]];if(d.A>=8)m.push(["Plan a reset after","Being there takes a heavy load of attention. Give yourself a break before switching to something important."]);return m.slice(0,4);}
+  if(t&&isP(t)){const m=[...MOVES_P[z.n]];
+    if(z.n==="Energy drain"&&d.C<=-0.75)m.unshift(["Put it on a routine","You already handle them on autopilot. A set slot and format keeps it contained."]);
+    if(z.n==="Energy drain"&&d.C>=2)m.unshift(["Have the honest conversation","A draining relationship that also takes your full attention is the most expensive kind. Talking about how you work together may be worth the discomfort."]);
+    if(d.A>=8)m.push(["Recharge afterwards","Time with them takes a lot out of you. Plan something restoring straight after."]);
+    return m.slice(0,4);}
+  const m=[...MOVES[z.n]];
+  if(z.n==="Energy drain"&&d.C<=-0.75)m.unshift(["Automate or delegate it first","You already do it on autopilot, so someone else, or a tool, probably could too."]);
+  if(z.n==="Energy drain"&&d.C>=2)m.unshift(["Fix this one first","It's a drain that also takes your full focus. That's the most expensive kind of task in your week."]);
+  if(d.A>=8)m.push(["Plan a break after it","It takes a heavy load of attention. Give yourself a short reset before switching to something important."]);
+  return m.slice(0,4);
+}
+function renderMoves(t,d){
+  el("moves").innerHTML=`<h3>${isP(t)?"Dealing with":isL(t)?"Making the most of":"What to do with"} ${esc(nm(t))}</h3><ol class="moves">`+movesFor(d,t).map(([a,b])=>`<li><strong>${a}.</strong> ${b}</li>`).join("")+`</ol>`;
+}
+function renderPlan(done){
+  const p=[];
+  const drains=done.filter(r=>["Energy drain","Pain in the arse"].includes(zone(r.d,r.t).n)).sort((a,b)=>b.d.A-a.d.A);
+  const sweet=done.filter(r=>zone(r.d,r.t).n==="Sweet spot").sort((a,b)=>b.d.M-a.d.M);
+  const duty=done.filter(r=>zone(r.d,r.t).n==="Worthwhile duty");
+  const self=done.filter(r=>zone(r.d,r.t).n==="Self-made pressure");
+  const lc=x=>x.charAt(0).toLowerCase()+x.slice(1);
+  const dT=drains.find(r=>isT(r.t)),dP=drains.find(r=>isP(r.t)),dL=drains.find(r=>isL(r.t));
+  if(dT){const mv=movesFor(dT.d,dT.t)[0];p.push(`<strong>Shrink ${esc(nm(dT.t))}.</strong> ${mv[0]}: ${lc(mv[1])}`);}
+  if(dP){const mv=movesFor(dP.d,dP.t)[0];p.push(`<strong>Protect yourself from ${esc(nm(dP.t))}.</strong> ${mv[0]}: ${lc(mv[1])}`);}
+  if(dL){const mv=movesFor(dL.d,dL.t)[0];p.push(`<strong>Spend less time at ${esc(nm(dL.t))}.</strong> ${mv[0]}: ${lc(mv[1])}`);}
+  const sP=sweet.find(r=>isP(r.t)),sT=sweet.find(r=>isT(r.t)),sL=sweet.find(r=>isL(r.t));
+  if(sT)p.push(`<strong>Protect ${esc(nm(sT.t))}.</strong> Book it into your best hours this week, before anything else fills them.`);
+  if(sP)p.push(`<strong>Make time for ${esc(nm(sP.t))}.</strong> Put a date in the diary this week.`);
+  if(sL)p.push(`<strong>Use ${esc(nm(sL.t))} for your best work.</strong> Take one thing that matters there this week.`);
+  if(!sweet.length)p.push(`<strong>Find a sweet spot.</strong> Nothing in your week is both chosen and enjoyed. Add one small thing, one person or one place you'd make time for anyway.`);
+  if(self[0])p.push(`<strong>Rethink ${esc(nm(self[0].t))}.</strong> You keep it going yourself. Decide if it still earns its place.`);
+  else if(duty[0])p.push(isP(duty[0].t)?`<strong>Set a rhythm with ${esc(nm(duty[0].t))}.</strong> Short, regular check-ins stop things piling up.`:`<strong>Get ahead on ${esc(nm(duty[0].t))}.</strong> Sort out what's coming early so it stays rewarding, not rushed.`);
+  el("plan").innerHTML=done.length>=2?`<h3>Your next moves</h3><ol class="moves">${p.slice(0,5).map(x=>`<li>${x}</li>`).join("")}</ol>`:"";
+}
+function renderSummary(){
+  const rows=state.tasks.map(t=>({t,d:taskDims(t)}));
+  let h=`<thead><tr><th>Task, person or place</th><th>Focus</th><th>Drive</th><th>Freedom</th><th>Mental load</th><th>Zone</th></tr></thead><tbody>`;
+  rows.forEach(({t,d})=>{h+=d?`<tr><td><i class="kdot ${kindOf(t)}"></i>${esc(t.name)}</td><td>${word("C",d.C)}</td><td>${word("M",d.M)}</td><td>${word("L",d.L)}</td><td>${loadWord(d.A)}</td><td><span class="pill ${zone(d,t).c}">${zone(d,t).n}</span></td></tr>`:`<tr><td><i class="kdot ${kindOf(t)}"></i>${esc(t.name)}</td><td colspan="5" style="color:var(--muted)">Not answered yet</td></tr>`;});
+  el("sumTable").innerHTML=h+"</tbody>";
+  const done=rows.filter(r=>r.d);const w=[];
+  if(done.length>=2){
+    const top=done.reduce((a,b)=>b.d.A>a.d.A?b:a),cap=done.reduce((a,b)=>b.d.L<a.d.L?b:a),joy=done.reduce((a,b)=>b.d.M>a.d.M?b:a);
+    w.push(`<strong>${esc(top.t.name)}</strong> puts the heaviest load on your mind.`);
+    if(joy!==top)w.push(`<strong>${esc(joy.t.name)}</strong> ${isP(joy.t)?"is who you most enjoy spending time with. Do they get the share of your week they deserve?":isL(joy.t)?"is where you most enjoy being. Do you get there often enough?":"is the task you enjoy most. Does it get the share of your week it deserves?"}`);
+    if(cap.d.L<0)w.push(`<strong>${esc(cap.t.name)}</strong> feels the least like your own choice.`);
+    const pains=done.filter(r=>zone(r.d,r.t).n==="Pain in the arse");
+    if(pains.length)w.push(`In your pain in the arse zone: ${pains.map(r=>esc(r.t.name)).join(", ")}.`);
+    const drains=done.filter(r=>zone(r.d,r.t).n==="Energy drain");
+    if(drains.length)w.push(`In your energy drain zone: ${drains.map(r=>esc(r.t.name)).join(", ")}.`);
+  }else w.push("Answer at least two to compare them.");
+  el("weekInsights").innerHTML=w.map(s=>`<li>${s}</li>`).join("");
+  renderPlan(done);
+}
+function render(){renderTasks();renderQuestions();renderMap();renderSummary();save();}
+el("prevBtn").onclick=()=>{if(state.cur>0){state.cur--;render();}};
+el("nextBtn").onclick=()=>{if(state.cur<state.tasks.length-1){state.cur++;render();}else el("t-sum").scrollIntoView({behavior:"smooth"});};
+el("clearBtn").onclick=()=>{state.tasks.forEach(t=>t.ans=[null,null,null,null,null,null]);state.example=false;state.cur=0;render();};
+/* ---------- share card ---------- */
+let cardFmt="post";
+const CARD={bg:"#EDF0EE",surface:"#F8FAF9",ink:"#15212A",muted:"#5B6870",line:"#CCD5D2",task:"#1F4FD8",person:"#C2366F",place:"#11806A",warm:"#C77A0A"};
+const FONT_D='"Bricolage Grotesque", "Segoe UI", sans-serif',FONT_B='"IBM Plex Sans", system-ui, sans-serif',FONT_M='"IBM Plex Mono", monospace';
+const SITE="phractl.com/attention";
+function fitText(ctx,t,w){if(ctx.measureText(t).width<=w)return t;while(t.length>1&&ctx.measureText(t+"…").width>w)t=t.slice(0,-1);return t+"…";}
+function drawCard(){
+  const cv=el("card"),ctx=cv.getContext("2d"),Wd=1080,Ht=cardFmt==="story"?1920:1350;cv.width=Wd;cv.height=Ht;
+  const story=cardFmt==="story",pad=80;
+  ctx.fillStyle=CARD.bg;ctx.fillRect(0,0,Wd,Ht);
+  ctx.textBaseline="alphabetic";
+  ctx.fillStyle=CARD.muted;ctx.font=`500 26px ${FONT_M}`;ctx.fillText("PHRACTL · ATTENTION MAP",pad,story?150:110);
+  ctx.fillStyle=CARD.ink;ctx.font=`700 ${story?96:80}px ${FONT_D}`;ctx.fillText("My attention map",pad,story?260:200);
+  const ms=story?Wd-2*pad-40:600,mx=story?pad+40:(Wd-ms)/2+20,my=story?380:300;
+  const vx=v=>mx+(v+4.7)/9.4*ms,vy=v=>my+(4.7-v)/9.4*ms,rr=C=>(5+(C+4)*1.9)*ms/340;
+  ctx.fillStyle=CARD.surface;ctx.fillRect(mx,my,ms,ms);
+  ctx.strokeStyle=CARD.line;ctx.lineWidth=2;ctx.strokeRect(mx,my,ms,ms);
+  ctx.beginPath();ctx.moveTo(vx(0),my);ctx.lineTo(vx(0),my+ms);ctx.moveTo(mx,vy(0));ctx.lineTo(mx+ms,vy(0));ctx.stroke();
+  ctx.fillStyle=CARD.muted;ctx.font=`500 ${story?30:26}px ${FONT_D}`;
+  ctx.textAlign="left";ctx.fillText("Self-made pressure",mx,my-14);ctx.fillText("Energy drain",mx,my+ms+34);
+  ctx.textAlign="right";ctx.fillText("Sweet spot",mx+ms,my-14);ctx.fillText("Worthwhile duty",mx+ms,my+ms+34);
+  const items=state.tasks.map(t=>({t,d:taskDims(t)})).filter(r=>r.d);
+  if(items.some(r=>isP(r.t))){ctx.save();ctx.fillStyle="rgba(194,54,111,.08)";ctx.strokeStyle="rgba(194,54,111,.5)";ctx.setLineDash([8,6]);
+    ctx.fillRect(vx(-4.7),vy(-2),vx(-2)-vx(-4.7),vy(-4.7)-vy(-2));ctx.strokeRect(vx(-4.7),vy(-2),vx(-2)-vx(-4.7),vy(-4.7)-vy(-2));ctx.restore();
+    ctx.save();ctx.translate(mx-14,(vy(-2)+my+ms)/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.fillStyle=CARD.person;ctx.font=`600 ${story?24:20}px ${FONT_D}`;ctx.fillText("Pain in the arse",0,0);ctx.restore();}
+  items.forEach(({t,d})=>{const c=CARD[kindOf(t)];ctx.beginPath();ctx.arc(vx(d.M),vy(d.L),rr(d.C),0,Math.PI*2);ctx.fillStyle=c+"55";ctx.fill();ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.stroke();});
+  const fs=story?26:22;ctx.font=`500 ${fs}px ${FONT_B}`;ctx.textAlign="center";const boxes=[];
+  items.forEach(({t,d})=>{const x0=vx(d.M),y0=vy(d.L),r=rr(d.C),txt=fitText(ctx,t.name,ms*0.42),w=ctx.measureText(txt).width+6;
+    const x=Math.min(Math.max(x0,mx+w/2+4),mx+ms-w/2-4);
+    const tries=[y0+r+fs+2,y0-r-8,y0+r+2*fs+6,y0-r-fs-12,y0+fs/2];
+    let y=tries.find(ty=>ty>my+fs&&ty<my+ms-4&&!boxes.some(o=>x-w/2<o[2]&&x+w/2>o[0]&&ty-fs<o[3]&&ty+4>o[1]));if(y===undefined)y=tries[0];
+    boxes.push([x-w/2,y-fs,x+w/2,y+4]);ctx.lineJoin="round";ctx.lineWidth=6;ctx.strokeStyle=CARD.surface;ctx.strokeText(txt,x,y);ctx.fillStyle=CARD.ink;ctx.fillText(txt,x,y);});
+  ctx.textAlign="left";
+  const zones=["Sweet spot","Worthwhile duty","Self-made pressure","Energy drain","Pain in the arse"];
+  const zc={"Sweet spot":CARD.task,"Worthwhile duty":CARD.warm,"Self-made pressure":CARD.warm,"Energy drain":"#B43C3C","Pain in the arse":CARD.person};
+  let y=my+ms+(story?120:100);const lh=story?62:52,zf=story?32:27;
+  zones.forEach(z=>{const names=items.filter(r=>zone(r.d,r.t).n===z).map(r=>r.t.name);if(!names.length)return;
+    if(y>Ht-(story?170:120))return;
+    ctx.font=`700 ${zf}px ${FONT_D}`;ctx.fillStyle=zc[z];const lab=z+":";ctx.fillText(lab,pad,y);
+    const lw=ctx.measureText(lab).width+14;ctx.font=`400 ${zf}px ${FONT_B}`;ctx.fillStyle=CARD.ink;ctx.fillText(fitText(ctx,names.join(", "),Wd-2*pad-lw),pad+lw,y);y+=lh;});
+  if(!items.length){ctx.font=`400 ${zf}px ${FONT_B}`;ctx.fillStyle=CARD.muted;ctx.fillText("Answer a few questions to fill your map.",pad,y);}
+  ctx.fillStyle=CARD.ink;ctx.fillRect(0,Ht-(story?120:96),Wd,story?120:96);
+  ctx.fillStyle=CARD.bg;ctx.font=`500 ${story?34:30}px ${FONT_D}`;ctx.fillText("Who's spending your attention?",pad,Ht-(story?48:38));
+  ctx.textAlign="right";ctx.font=`500 ${story?28:24}px ${FONT_M}`;ctx.fillText(SITE,Wd-pad,Ht-(story?48:38));ctx.textAlign="left";
+}
+function cardBlob(){return new Promise(r=>el("card").toBlob(r,"image/png"));}
+function shareNote(m){const n=el("shareNote");n.textContent=m;n.hidden=!m;}
+el("shareNative").onclick=async()=>{shareNote("");try{const b=await cardBlob();const f=new File([b],"my-attention-map.png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"My attention map",text:"Who's spending your attention? Map yours:",url:"https://"+SITE});}
+  else{shareNote("Your browser can't share images directly. Use Save image and post it from your photos.");}}
+  catch(e){if(e&&e.name==="AbortError")return;shareNote("Sharing isn't available in this preview. It will work on phractl.com.");}};
+el("shareSave").onclick=async()=>{shareNote("");try{const b=await cardBlob();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="my-attention-map.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+  shareNote("If nothing downloaded, saving is blocked in this preview. It will work on phractl.com. On a phone you can also press and hold the image.");}catch(e){shareNote("Saving isn't available in this preview. It will work on phractl.com.");}};
+document.querySelectorAll(".sharehead .chip").forEach(b=>b.onclick=()=>{cardFmt=b.dataset.f;document.querySelectorAll(".sharehead .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));drawCard();});
+const _render=render;render=function(){_render();drawCard();};
+const _rs=renderSummary;renderSummary=function(){_rs();drawCard();};
+render();
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(drawCard);
+</script>
+</body>
+</html>
