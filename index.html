@@ -129,7 +129,9 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .movebox{display:grid;gap:8px}.movebox:empty{display:none}
 .moves{margin:0;padding-left:20px;display:grid;gap:8px}.moves li{max-width:62ch}.moves li::marker{color:var(--accent);font-family:var(--f-mono)}
 .map .movebox{border-top:1px solid var(--line);padding-top:16px}
-.share{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:18px}
+.share{display:grid;gap:14px}
+.namefield{display:grid;gap:6px;font-size:14px;color:var(--muted);max-width:360px}
+.namefield input{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px}
 .sharehead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .sharehead .kinds{display:inline-flex;gap:6px}
 #card{width:100%;max-width:360px;height:auto;border-radius:10px;border:1px solid var(--line);display:block}
@@ -142,9 +144,9 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">phractl · attention map</div>
+    <div class="brand">@phractl · attention map</div>
     <h1>Where does your <em>attention</em> actually go?</h1>
-    <p class="lede">Add the tasks, people and places that fill your week, and answer six quick statements about each. You'll see how much focus each one takes, whether it brings you pleasure or pressure, and whether you chose it or it chose you.</p>
+    <p class="lede">Add the tasks, people and places that take up your attention, and answer six quick statements about each. You'll see how much focus each one takes, whether it brings you pleasure or pressure, and whether you chose it or it chose you.</p>
   </header>
 
   <section class="card" aria-labelledby="t-tasks">
@@ -165,7 +167,7 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
         <h2 id="t-q">Think about the time you spend <span id="qPrep">on</span> <span id="qTask">deep work</span>.</h2>
       </div>
       <div id="questions" style="display:grid;gap:16px"></div>
-      <div class="nav">
+      <div class="nav" id="qNav">
         <button class="btn ghost" id="prevBtn" type="button">Previous</button>
         <button class="btn" id="nextBtn" type="button">Next</button>
       </div>
@@ -174,6 +176,7 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
     <div class="card map" aria-labelledby="t-map">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
         <h2 id="t-map">Your attention map</h2>
+        <button class="btn" id="toShare" type="button">Share my map</button>
       </div>
       <svg id="map" viewBox="0 0 420 430" role="img" aria-label="Map of tasks by motivation and liberty"></svg>
       <div class="legend">
@@ -190,23 +193,25 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
     </div>
   </section>
 
-  <section class="card summary" aria-labelledby="t-sum">
-    <h2 id="t-sum">Your week at a glance</h2>
-    <div class="tablewrap"><table id="sumTable"></table></div>
-    <ul class="insights" id="weekInsights"></ul>
-    <div class="movebox" id="plan"></div>
-    <div class="share">
+    <section class="card share" id="shareCard" aria-labelledby="t-share">
       <div class="sharehead">
-        <h3>Share your map</h3>
+        <h2 id="t-share">Share your map</h2>
         <div class="kinds" role="group" aria-label="Image size"><button type="button" class="chip" data-f="post" aria-pressed="true">Post 4:5</button><button type="button" class="chip" data-f="story" aria-pressed="false">Story 9:16</button></div>
       </div>
+      <label class="namefield" for="userName">Your name on the card <input id="userName" maxlength="30" placeholder="e.g. Sam" autocomplete="given-name"></label>
       <canvas id="card" aria-label="Shareable image of your attention map"></canvas>
       <div class="nav" style="justify-content:flex-start">
         <button class="btn" id="shareNative" type="button">Share</button>
         <button class="btn ghost" id="shareSave" type="button">Save image</button>
       </div>
       <p class="sharenote" id="shareNote" hidden></p>
-    </div>
+    </section>
+
+  <section class="card summary" aria-labelledby="t-sum">
+    <h2 id="t-sum">Your attention at a glance</h2>
+    <div class="tablewrap"><table id="sumTable"></table></div>
+    <ul class="insights" id="weekInsights"></ul>
+    <div class="movebox" id="plan"></div>
   </section>
 
   <footer>How it works: every statement nudges one of three scores, focus, drive or freedom. Mental load adds up how hard a task, person or place pulls on you, whichever way it pulls. Your answers stay on this device.<br><br>A Phractl tool. More on attention, systems and growth at <a href="https://phractl.com" target="_blank" rel="noopener">phractl.com</a>.</footer>
@@ -246,7 +251,7 @@ let state={profile:"general",tasks:freshTasks("general",true),cur:0,example:true
 try{const s=JSON.parse(localStorage.getItem("ascape3")||"null");if(s&&s.tasks&&s.tasks.length&&s.profile)state=s;}catch(e){}
 const OLD_ACADEMIC=["research","writing","teaching","admin","pstud","phod","pcoau","lcampus","llib"];
 if(state.profile!=="general"){state.profile="general";if(!state.example)state.tasks=state.tasks.filter(t=>!OLD_ACADEMIC.includes(t.id));}
-if(!state.tasks.length){state.tasks=freshTasks("general",true);state.example=true;}
+if(!state.tasks.length&&state.example){state.tasks=freshTasks("general",true);}
 if(state.example){state.tasks=freshTasks(state.profile,true);state.cur=Math.min(state.cur,state.tasks.length-1);}
 const save=()=>{try{localStorage.setItem("ascape3",JSON.stringify(state))}catch(e){}};
 
@@ -364,6 +369,9 @@ function renderTasks(){
 }
 function renderQuestions(){
   const t=state.tasks[state.cur];
+  const empty=!t;el("qNav").hidden=empty;
+  if(empty){el("qStep").textContent="Start here";el("t-q").textContent="Add a task, person or place above to begin.";el("questions").innerHTML=`<p style="margin:0;color:var(--muted)">Pick Task, Person or Place, type a name and press Add. Try the things that take up most of your attention: a job, a meeting, a person you deal with every day, the place you work.</p>`;return;}
+  if(!el("qTask")){el("t-q").innerHTML='Think about the time you spend <span id="qPrep">on</span> <span id="qTask"></span>.';}
   el("qStep").textContent=`${{task:"Task",person:"Person",place:"Place"}[kindOf(t)]} · ${state.cur+1} of ${state.tasks.length}`;
   el("qPrep").textContent=isP(t)?"with":isL(t)?"at":"on";
   el("qTask").textContent=nm(t);
@@ -378,7 +386,7 @@ function renderQuestions(){
     q.appendChild(d);
   });
   el("prevBtn").disabled=state.cur===0;
-  el("nextBtn").textContent=state.cur===state.tasks.length-1?"See my week":"Next";
+  el("nextBtn").textContent=state.cur===state.tasks.length-1?"See the summary":"Next";
 }
 
 const W=420,P=40,PT=34,span=W-2*P,H=PT+span+56,sx=v=>P+(v+4.7)/9.4*span,sy=v=>PT+(4.7-v)/9.4*span,rad=C=>5+(C+4)*1.9,BOT=PT+span;
@@ -397,7 +405,7 @@ function placeLabels(labs){
   return out;
 }
 function renderMap(){
-  const svg=el("map");const cur=state.tasks[state.cur];
+  const svg=el("map");const cur=state.tasks[state.cur]||null;
   let g=`<rect x="${P}" y="${PT}" width="${span}" height="${span}" fill="none" stroke="var(--line)"/>`;
   for(let v=-4;v<=4;v++){
     const w=v===0?1.4:.6,o=v===0?1:.6;
@@ -416,17 +424,17 @@ function renderMap(){
   state.tasks.forEach((t,i)=>{const d=taskDims(t);if(!d||i===state.cur)return;
     const c=colOf(t);g+=`<circle class="pt hit" data-i="${i}" cx="${sx(d.M)}" cy="${sy(d.L)}" r="${rad(d.C)}" fill="${c}" fill-opacity=".16" stroke="${c}" stroke-opacity=".7"><title>${esc(t.name)}</title></circle>`;
     labs.push({i,x:sx(d.M),y:sy(d.L),r:rad(d.C),t:short(t.name),bold:false});});
-  const d=taskDims(cur);
+  const d=cur?taskDims(cur):null;
   if(d)labs.unshift({i:state.cur,x:sx(d.M),y:sy(d.L),r:rad(d.C),t:short(cur.name),bold:true});
   if(d){g+=`<circle class="pt" cx="${sx(d.M)}" cy="${sy(d.L)}" r="${rad(d.C)}" fill="${colOf(cur)}" fill-opacity=".9"><title>${esc(cur.name)}</title></circle>`;
 }
   g+=placeLabels(labs);
   svg.innerHTML=g;
   svg.querySelectorAll(".hit").forEach(c=>c.onclick=()=>{state.cur=+c.dataset.i;render();});
-  el("mapSel").textContent=taskDims(cur)?`Showing: ${cur.name}`:"";
+  el("mapSel").textContent=d?`Showing: ${cur.name}`:"";
   // readout
   const r=el("readout");
-  if(!d){r.innerHTML=`<p style="grid-column:1/-1;margin:0;color:var(--muted)">Answer all six statements to place ${esc(cur.name)} on the map.</p>`;el("insights").innerHTML="";el("moves").innerHTML="";return;}
+  if(!d){r.innerHTML=`<p style="grid-column:1/-1;margin:0;color:var(--muted)">${cur?`Answer all six statements to place ${esc(cur.name)} on the map.`:"Your map fills in as you answer."}</p>`;el("insights").innerHTML="";el("moves").innerHTML="";return;}
   const m=(lab,v,max,mid)=>`<div class="meter"><span class="label">${mid?["","Focus","Drive","Freedom"][mid]:"Mental load"}</span><span class="v">${lab}</span><div class="bar ${mid?"mid":""}"><i style="${mid?(v>=0?`left:50%;width:${v/8*100}%`:`left:${50+v/8*100}%;width:${-v/8*100}%`):`left:0;width:${v/max*100}%`}"></i></div></div>`;
   r.innerHTML=m(word("C",d.C),d.C,4,1)+m(word("M",d.M),d.M,4,2)+m(word("L",d.L),d.L,4,3)+m(loadWord(d.A),d.A,12,0);
   el("insights").innerHTML=insightsFor(cur,d).map(s=>`<li>${s}</li>`).join("");
@@ -448,7 +456,7 @@ function movesFor(d,t){
     return m.slice(0,4);}
   const m=[...MOVES[z.n]];
   if(z.n==="Energy drain"&&d.C<=-0.75)m.unshift(["Automate or delegate it first","You already do it on autopilot, so someone else, or a tool, probably could too."]);
-  if(z.n==="Energy drain"&&d.C>=2)m.unshift(["Fix this one first","It's a drain that also takes your full focus. That's the most expensive kind of task in your week."]);
+  if(z.n==="Energy drain"&&d.C>=2)m.unshift(["Fix this one first","It's a drain that also takes your full focus. That's the most expensive kind of task there is."]);
   if(d.A>=8)m.push(["Plan a break after it","It takes a heavy load of attention. Give yourself a short reset before switching to something important."]);
   return m.slice(0,4);
 }
@@ -470,7 +478,7 @@ function renderPlan(done){
   if(sT)p.push(`<strong>Protect ${esc(nm(sT.t))}.</strong> Book it into your best hours this week, before anything else fills them.`);
   if(sP)p.push(`<strong>Make time for ${esc(nm(sP.t))}.</strong> Put a date in the diary this week.`);
   if(sL)p.push(`<strong>Use ${esc(nm(sL.t))} for your best work.</strong> Take one thing that matters there this week.`);
-  if(!sweet.length)p.push(`<strong>Find a sweet spot.</strong> Nothing in your week is both chosen and enjoyed. Add one small thing, one person or one place you'd make time for anyway.`);
+  if(!sweet.length)p.push(`<strong>Find a sweet spot.</strong> Nothing on your map is both chosen and enjoyed. Add one small thing, one person or one place you'd make time for anyway.`);
   if(self[0])p.push(`<strong>Rethink ${esc(nm(self[0].t))}.</strong> You keep it going yourself. Decide if it still earns its place.`);
   else if(duty[0])p.push(isP(duty[0].t)?`<strong>Set a rhythm with ${esc(nm(duty[0].t))}.</strong> Short, regular check-ins stop things piling up.`:`<strong>Get ahead on ${esc(nm(duty[0].t))}.</strong> Sort out what's coming early so it stays rewarding, not rushed.`);
   el("plan").innerHTML=done.length>=2?`<h3>Your next moves</h3><ol class="moves">${p.slice(0,5).map(x=>`<li>${x}</li>`).join("")}</ol>`:"";
@@ -484,7 +492,7 @@ function renderSummary(){
   if(done.length>=2){
     const top=done.reduce((a,b)=>b.d.A>a.d.A?b:a),cap=done.reduce((a,b)=>b.d.L<a.d.L?b:a),joy=done.reduce((a,b)=>b.d.M>a.d.M?b:a);
     w.push(`<strong>${esc(top.t.name)}</strong> puts the heaviest load on your mind.`);
-    if(joy!==top)w.push(`<strong>${esc(joy.t.name)}</strong> ${isP(joy.t)?"is who you most enjoy spending time with. Do they get the share of your week they deserve?":isL(joy.t)?"is where you most enjoy being. Do you get there often enough?":"is the task you enjoy most. Does it get the share of your week it deserves?"}`);
+    if(joy!==top)w.push(`<strong>${esc(joy.t.name)}</strong> ${isP(joy.t)?"is who you most enjoy spending time with. Do they get the time they deserve?":isL(joy.t)?"is where you most enjoy being. Do you get there often enough?":"is the task you enjoy most. Does it get the time it deserves?"}`);
     if(cap.d.L<0)w.push(`<strong>${esc(cap.t.name)}</strong> feels the least like your own choice.`);
     const pains=done.filter(r=>zone(r.d,r.t).n==="Pain in the arse");
     if(pains.length)w.push(`In your pain in the arse zone: ${pains.map(r=>esc(r.t.name)).join(", ")}.`);
@@ -495,9 +503,10 @@ function renderSummary(){
   renderPlan(done);
 }
 function render(){renderTasks();renderQuestions();renderMap();renderSummary();save();}
+el("toShare").onclick=()=>{drawCard();el("shareCard").scrollIntoView({behavior:"smooth",block:"start"});};
 el("prevBtn").onclick=()=>{if(state.cur>0){state.cur--;render();}};
 el("nextBtn").onclick=()=>{if(state.cur<state.tasks.length-1){state.cur++;render();}else el("t-sum").scrollIntoView({behavior:"smooth"});};
-el("clearBtn").onclick=()=>{state.tasks.forEach(t=>t.ans=[null,null,null,null,null,null]);state.example=false;state.cur=0;render();};
+el("clearBtn").onclick=()=>{state.tasks=[];state.example=false;state.cur=0;render();const n=el("newItem");if(n)n.focus();};
 /* ---------- share card ---------- */
 let cardFmt="post";
 const CARD={bg:"#EDF0EE",surface:"#F8FAF9",ink:"#15212A",muted:"#5B6870",line:"#CCD5D2",task:"#1F4FD8",person:"#C2366F",place:"#11806A",warm:"#C77A0A"};
@@ -509,8 +518,8 @@ function drawCard(){
   const story=cardFmt==="story",pad=80;
   ctx.fillStyle=CARD.bg;ctx.fillRect(0,0,Wd,Ht);
   ctx.textBaseline="alphabetic";
-  ctx.fillStyle=CARD.muted;ctx.font=`500 26px ${FONT_M}`;ctx.fillText("PHRACTL · ATTENTION MAP",pad,story?150:110);
-  ctx.fillStyle=CARD.ink;ctx.font=`700 ${story?96:80}px ${FONT_D}`;ctx.fillText("My attention map",pad,story?260:200);
+  ctx.fillStyle=CARD.muted;ctx.font=`500 26px ${FONT_M}`;ctx.fillText("@phractl · attention map",pad,story?150:110);
+  ctx.fillStyle=CARD.ink;ctx.font=`700 ${story?96:80}px ${FONT_D}`;ctx.fillText(fitText(ctx,cardTitle(),Wd-2*pad),pad,story?260:200);
   const ms=story?Wd-2*pad-40:600,mx=story?pad+40:(Wd-ms)/2+20,my=story?380:300;
   const vx=v=>mx+(v+4.7)/9.4*ms,vy=v=>my+(4.7-v)/9.4*ms,rr=C=>(5+(C+4)*1.9)*ms/340;
   ctx.fillStyle=CARD.surface;ctx.fillRect(mx,my,ms,ms);
@@ -543,14 +552,16 @@ function drawCard(){
   ctx.fillStyle=CARD.bg;ctx.font=`500 ${story?34:30}px ${FONT_D}`;ctx.fillText("Who's spending your attention?",pad,Ht-(story?48:38));
   ctx.textAlign="right";ctx.font=`500 ${story?28:24}px ${FONT_M}`;ctx.fillText(SITE,Wd-pad,Ht-(story?48:38));ctx.textAlign="left";
 }
+function cardTitle(){const n=(state.userName||"").trim();return n?`${n}${/s$/i.test(n)?"’":"’s"} attention map`:"My attention map";}
 function cardBlob(){return new Promise(r=>el("card").toBlob(r,"image/png"));}
 function shareNote(m){const n=el("shareNote");n.textContent=m;n.hidden=!m;}
 el("shareNative").onclick=async()=>{shareNote("");try{const b=await cardBlob();const f=new File([b],"my-attention-map.png",{type:"image/png"});
-  if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"My attention map",text:"Who's spending your attention? Map yours:",url:"https://"+SITE});}
+  if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:cardTitle(),text:"Mapped my attention with @phractl. Who's spending yours?",url:"https://"+SITE});}
   else{shareNote("Your browser can't share images directly. Use Save image and post it from your photos.");}}
   catch(e){if(e&&e.name==="AbortError")return;shareNote("Sharing isn't available in this preview. It will work on phractl.com.");}};
 el("shareSave").onclick=async()=>{shareNote("");try{const b=await cardBlob();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="my-attention-map.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
   shareNote("If nothing downloaded, saving is blocked in this preview. It will work on phractl.com. On a phone you can also press and hold the image.");}catch(e){shareNote("Saving isn't available in this preview. It will work on phractl.com.");}};
+const un=el("userName");un.value=state.userName||"";un.oninput=()=>{state.userName=un.value;save();drawCard();};
 document.querySelectorAll(".sharehead .chip").forEach(b=>b.onclick=()=>{cardFmt=b.dataset.f;document.querySelectorAll(".sharehead .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));drawCard();});
 const _render=render;render=function(){_render();drawCard();};
 const _rs=renderSummary;renderSummary=function(){_rs();drawCard();};
