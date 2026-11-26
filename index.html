@@ -24,7 +24,7 @@
 :root{
   --bg:#EDF0EE; --surface:#F8FAF9; --ink:#15212A; --muted:#5B6870; --line:#CCD5D2;
   --accent:#1F4FD8; --accent-soft:#DCE5FB; --warm:#C77A0A; --warm-soft:#F6E7CC;
-  --bench:#8A979E; --people:#C2366F; --people-soft:#F8DDE8; --place:#11806A; --place-soft:#D4EEE7; --drain:#B43C3C;
+  --bench:#8A979E; --people:#C2366F; --people-soft:#F8DDE8; --place:#11806A; --place-soft:#D4EEE7; --drain:#B43C3C; --pain:#7B4A26;
   --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -32,11 +32,11 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0F161B; --surface:#172129; --ink:#E4EBEE; --muted:#93A2AA; --line:#2B3943;
   --accent:#7C9CFF; --accent-soft:#1E2B4D; --warm:#F0A93A; --warm-soft:#3A2A10;
-  --bench:#6E7E87; --people:#F27BA8; --people-soft:#4A1E30; --place:#4FCFAE; --place-soft:#143A31; --drain:#EB7A7A; color-scheme:dark}}
+  --bench:#6E7E87; --people:#F27BA8; --people-soft:#4A1E30; --place:#4FCFAE; --place-soft:#143A31; --drain:#EB7A7A; --pain:#D0A070; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F161B; --surface:#172129; --ink:#E4EBEE; --muted:#93A2AA; --line:#2B3943;
   --accent:#7C9CFF; --accent-soft:#1E2B4D; --warm:#F0A93A; --warm-soft:#3A2A10;
-  --bench:#6E7E87; --people:#F27BA8; --people-soft:#4A1E30; --place:#4FCFAE; --place-soft:#143A31; --drain:#EB7A7A; color-scheme:dark}
+  --bench:#6E7E87; --people:#F27BA8; --people-soft:#4A1E30; --place:#4FCFAE; --place-soft:#143A31; --drain:#EB7A7A; --pain:#D0A070; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
@@ -125,7 +125,7 @@ th{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:
 td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .pill{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--ink);white-space:nowrap}
 .pill.drain{background:color-mix(in srgb,var(--drain) 18%,transparent)}
-.pill.pain{background:var(--people);color:var(--surface)}
+.pill.pain{background:var(--pain);color:var(--surface)}
 .pill.pull{background:var(--warm-soft)}
 .seg{display:inline-flex;gap:6px}
 .toggle{display:inline-flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
@@ -433,8 +433,8 @@ function renderMap(){
   g+=`<text class="quad" x="${W-P}" y="${PT-10}" text-anchor="end">Sweet spot</text>`;
   g+=`<text class="quad" x="${P}" y="${BOT+18}">Energy drain</text>`;
   g+=`<text class="quad" x="${W-P}" y="${BOT+18}" text-anchor="end">Worthwhile duty</text>`;
-  if(state.tasks.some(isP)){g+=`<rect x="${sx(-4.7)}" y="${sy(-2)}" width="${sx(-2)-sx(-4.7)}" height="${sy(-4.7)-sy(-2)}" fill="var(--people)" fill-opacity=".08" stroke="var(--people)" stroke-opacity=".5" stroke-dasharray="4 3"/>`;
-    g+=`<text class="quad" transform="translate(${P-7} ${(sy(-2)+BOT)/2}) rotate(-90)" text-anchor="middle" style="fill:var(--people);font-size:12px;font-weight:600">Pain in the arse</text>`;}
+  if(state.tasks.some(isP)){g+=`<rect x="${sx(-4.7)}" y="${sy(-2)}" width="${sx(-2)-sx(-4.7)}" height="${sy(-4.7)-sy(-2)}" fill="var(--pain)" fill-opacity=".08" stroke="var(--pain)" stroke-opacity=".5" stroke-dasharray="4 3"/>`;
+    g+=`<text class="quad" transform="translate(${P-7} ${(sy(-2)+BOT)/2}) rotate(-90)" text-anchor="middle" style="fill:var(--pain);font-size:12px;font-weight:600">Pain in the arse</text>`;}
   g+=`<text x="${W/2}" y="${H-6}" text-anchor="middle">pressure ← DRIVE → pleasure</text>`;
   g+=`<text transform="translate(12 ${PT+span/2}) rotate(-90)" text-anchor="middle">have to ← FREEDOM → choose to</text>`;
   const labs=[];
@@ -526,7 +526,7 @@ el("nextBtn").onclick=()=>{if(state.cur<state.tasks.length-1){state.cur++;render
 el("clearBtn").onclick=()=>{track("clear-examples");state.tasks=[];state.example=false;state.cur=0;render();const n=el("newItem");if(n)n.focus();};
 /* ---------- share card ---------- */
 let cardFmt="post";
-const CARD={bg:"#EDF0EE",surface:"#F8FAF9",ink:"#15212A",muted:"#5B6870",line:"#CCD5D2",task:"#1F4FD8",person:"#C2366F",place:"#11806A",warm:"#C77A0A"};
+const CARD={bg:"#EDF0EE",surface:"#F8FAF9",ink:"#15212A",muted:"#5B6870",line:"#CCD5D2",task:"#1F4FD8",person:"#C2366F",place:"#11806A",warm:"#C77A0A",pain:"#7B4A26"};
 const FONT_D='"Bricolage Grotesque", "Segoe UI", sans-serif',FONT_B='"IBM Plex Sans", system-ui, sans-serif',FONT_M='"IBM Plex Mono", monospace';
 const SITE="attentioneconomix.com";
 function fitText(ctx,t,w){if(ctx.measureText(t).width<=w)return t;while(t.length>1&&ctx.measureText(t+"…").width>w)t=t.slice(0,-1);return t+"…";}
@@ -546,9 +546,9 @@ function drawCard(){
   ctx.textAlign="left";ctx.fillText("Self-made pressure",mx,my-14);ctx.fillText("Energy drain",mx,my+ms+34);
   ctx.textAlign="right";ctx.fillText("Sweet spot",mx+ms,my-14);ctx.fillText("Worthwhile duty",mx+ms,my+ms+34);
   const items=state.tasks.map(t=>({t,d:taskDims(t)})).filter(r=>r.d);
-  if(items.some(r=>isP(r.t))){ctx.save();ctx.fillStyle="rgba(194,54,111,.08)";ctx.strokeStyle="rgba(194,54,111,.5)";ctx.setLineDash([8,6]);
+  if(items.some(r=>isP(r.t))){ctx.save();ctx.fillStyle="rgba(123,74,38,.08)";ctx.strokeStyle="rgba(123,74,38,.5)";ctx.setLineDash([8,6]);
     ctx.fillRect(vx(-4.7),vy(-2),vx(-2)-vx(-4.7),vy(-4.7)-vy(-2));ctx.strokeRect(vx(-4.7),vy(-2),vx(-2)-vx(-4.7),vy(-4.7)-vy(-2));ctx.restore();
-    ctx.save();ctx.translate(mx-14,(vy(-2)+my+ms)/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.fillStyle=CARD.person;ctx.font=`600 ${story?24:20}px ${FONT_D}`;ctx.fillText("Pain in the arse",0,0);ctx.restore();}
+    ctx.save();ctx.translate(mx-14,(vy(-2)+my+ms)/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.fillStyle=CARD.pain;ctx.font=`600 ${story?24:20}px ${FONT_D}`;ctx.fillText("Pain in the arse",0,0);ctx.restore();}
   items.forEach(({t,d})=>{const c=CARD[kindOf(t)];ctx.beginPath();ctx.arc(vx(d.M),vy(d.L),rr(d.C),0,Math.PI*2);ctx.fillStyle=c+"55";ctx.fill();ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.stroke();});
   const fs=story?26:22;ctx.font=`500 ${fs}px ${FONT_B}`;ctx.textAlign="center";const boxes=[];
   items.forEach(({t,d})=>{const x0=vx(d.M),y0=vy(d.L),r=rr(d.C),txt=fitText(ctx,t.name,ms*0.42),w=ctx.measureText(txt).width+6;
@@ -558,7 +558,7 @@ function drawCard(){
     boxes.push([x-w/2,y-fs,x+w/2,y+4]);ctx.lineJoin="round";ctx.lineWidth=6;ctx.strokeStyle=CARD.surface;ctx.strokeText(txt,x,y);ctx.fillStyle=CARD.ink;ctx.fillText(txt,x,y);});
   ctx.textAlign="left";
   const zones=["Sweet spot","Worthwhile duty","Self-made pressure","Energy drain","Pain in the arse"];
-  const zc={"Sweet spot":CARD.task,"Worthwhile duty":CARD.warm,"Self-made pressure":CARD.warm,"Energy drain":"#B43C3C","Pain in the arse":CARD.person};
+  const zc={"Sweet spot":CARD.task,"Worthwhile duty":CARD.warm,"Self-made pressure":CARD.warm,"Energy drain":"#B43C3C","Pain in the arse":CARD.pain};
   let y=my+ms+(story?120:100);const lh=story?62:52,zf=story?32:27;
   zones.forEach(z=>{const names=items.filter(r=>zone(r.d,r.t).n===z).map(r=>r.t.name);if(!names.length)return;
     if(y>Ht-(story?170:120))return;
