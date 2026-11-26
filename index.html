@@ -260,13 +260,12 @@ const PROFILES={
   general:{label:"Everyone",tasks:[
     {id:"deep",name:"Deep work",phrase:"doing focused, deep work"},
     {id:"meetings",name:"Meetings",phrase:"in meetings"},
-    {id:"email",name:"Email and messages",phrase:"dealing with email and messages"},
-    {id:"gadmin",name:"Admin",phrase:"doing admin"}],people:[
-    {id:"pman",name:"My manager"},{id:"pfriend",name:"A close friend"},{id:"pcol",name:"A difficult colleague"}],places:[
-    {id:"loffice",name:"The office"},{id:"lhome",name:"Home"}]}
+    {id:"email",name:"Work emails",phrase:"dealing with work emails"}],people:[
+    {id:"pfriend",name:"Bestie"},{id:"pcol",name:"Dwight"}],places:[
+    {id:"loffice",name:"The office"},{id:"lhome",name:"Home"},{id:"lgym",name:"Gym"}]}
 };
 const EXAMPLE={deep:[5,4,2,2,2,5],meetings:[3,4,4,3,2,2],email:[2,1,4,4,4,2],gadmin:[3,2,5,4,2,1],
-  pman:[4,3,5,3,2,2],pfriend:[5,5,1,2,2,5],pcol:[4,1,5,5,2,1],loffice:[3,5,4,2,2,2],lhome:[3,4,2,3,3,4]};
+  pman:[4,3,5,3,2,2],pfriend:[5,5,1,2,2,5],pcol:[4,1,5,5,2,1],loffice:[3,5,4,2,2,2],lhome:[3,4,2,3,3,4],lgym:[4,2,2,4,2,5]};
 const freshTasks=(p,ex)=>[...PROFILES[p].tasks.map(t=>({...t,kind:"task"})),...PROFILES[p].people.map(t=>({...t,kind:"person"})),...PROFILES[p].places.map(t=>({...t,kind:"place"}))].map(t=>({...t,ans:ex?[...EXAMPLE[t.id]]:[null,null,null,null,null,null]}));
 
 let state={profile:"general",tasks:freshTasks("general",true),cur:0,example:true};
@@ -564,7 +563,7 @@ function drawCard(){
   ctx.textAlign="left";
   const zones=["Sweet spot","Worthwhile duty","Self-made pressure","Energy drain","Pain in the arse"];
   const zc={"Sweet spot":CARD.task,"Worthwhile duty":CARD.warm,"Self-made pressure":CARD.warm,"Energy drain":"#B43C3C","Pain in the arse":CARD.pain};
-  let y=my+ms+(story?120:100);const lh=story?62:52,zf=story?32:27;
+  let y=my+ms+(story?120:100);const nz=zones.filter(z=>items.some(r=>zone(r.d,r.t).n===z)).length;const lh=story?62:(nz>4?46:52),zf=story?32:(nz>4?25:27);
   zones.forEach(z=>{const names=items.filter(r=>zone(r.d,r.t).n===z).map(r=>r.t.name);if(!names.length)return;
     if(y>Ht-(story?210:150))return;
     ctx.font=`700 ${zf}px ${FONT_D}`;ctx.fillStyle=zc[z];const lab=z+":";ctx.fillText(lab,pad,y);
