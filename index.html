@@ -136,6 +136,9 @@ td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .sharehead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .sharehead .kinds{display:inline-flex;gap:6px}
 #card{width:100%;max-width:360px;height:auto;border-radius:10px;border:1px solid var(--line);display:block}
+.sharemenu{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sharemenu .sharenote{flex-basis:100%;max-width:none}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .sharenote{margin:0;font-size:13px;color:var(--muted);max-width:60ch}
 footer a{color:var(--ink)}
 footer{color:var(--muted);font-size:13px;max-width:70ch}
@@ -204,6 +207,15 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
       <div class="nav" style="justify-content:flex-start">
         <button class="btn" id="shareNative" type="button">Share</button>
         <button class="btn ghost" id="shareSave" type="button">Save image</button>
+      </div>
+      <div class="sharemenu" id="shareMenu" hidden>
+        <button class="btn ghost" id="copyImg" type="button">Copy image</button>
+        <a class="btn ghost" id="toX" target="_blank" rel="noopener">Post on X</a>
+        <a class="btn ghost" id="toLinkedIn" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="btn ghost" id="toFacebook" target="_blank" rel="noopener">Facebook</a>
+        <a class="btn ghost" id="toWhatsApp" target="_blank" rel="noopener">WhatsApp</a>
+        <button class="btn ghost" id="moreShare" type="button" hidden>More options</button>
+        <p class="sharenote">X, LinkedIn, Facebook and WhatsApp share the link. To post the picture, copy or save it and add it to your post. For Instagram, save it and post from your phone.</p>
       </div>
       <p class="sharenote" id="shareNote" hidden></p>
     </section>
@@ -558,12 +570,28 @@ function drawCard(){
 function cardTitle(){const n=(state.userName||"").trim();return n?`${n}${/s$/i.test(n)?"’":"’s"} attention map`:"My attention map";}
 function cardBlob(){return new Promise(r=>el("card").toBlob(r,"image/png"));}
 function shareNote(m){const n=el("shareNote");n.textContent=m;n.hidden=!m;}
-el("shareNative").onclick=async()=>{track("share-tap-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");try{const b=await cardBlob();const f=new File([b],"my-attention-map.png",{type:"image/png"});
-  if(navigator.canShare&&navigator.canShare({files:[f]})){track("share-sheet-open");await navigator.share({files:[f],title:cardTitle(),text:"Mapped my attention with @phractl. Who's spending yours?",url:"https://"+SITE});}
-  else{shareNote("Your browser can't share images directly. Use Save image and post it from your photos.");}}
-  catch(e){if(e&&e.name==="AbortError")return;shareNote("Sharing isn't available in this preview. It will work on phractl.com.");}};
-el("shareSave").onclick=async()=>{track("save-image-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");try{const b=await cardBlob();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="my-attention-map.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
-  shareNote("If nothing downloaded, saving is blocked in this preview. It will work on phractl.com. On a phone you can also press and hold the image.");}catch(e){shareNote("Saving isn't available in this preview. It will work on phractl.com.");}};
+const SHARE_TEXT="Mapped my attention with @phractl. Who's spending yours?",SHARE_URL="https://"+SITE+"/";
+async function cardFile(){const b=await cardBlob();return new File([b],"my-attention-map.png",{type:"image/png"});}
+const touch=()=>window.matchMedia&&matchMedia("(pointer:coarse)").matches;
+async function nativeShare(){const f=await cardFile();track("share-sheet-open");await navigator.share({files:[f],title:cardTitle(),text:SHARE_TEXT,url:SHARE_URL});}
+function setLinks(){const t=encodeURIComponent(SHARE_TEXT),u=encodeURIComponent(SHARE_URL);
+  el("toX").href=`https://x.com/intent/post?text=${t}&url=${u}`;
+  el("toLinkedIn").href=`https://www.linkedin.com/sharing/share-offsite/?url=${u}`;
+  el("toFacebook").href=`https://www.facebook.com/sharer/sharer.php?u=${u}`;
+  el("toWhatsApp").href=`https://wa.me/?text=${t}%20${u}`;}
+setLinks();
+[["toX","x"],["toLinkedIn","linkedin"],["toFacebook","facebook"],["toWhatsApp","whatsapp"]].forEach(([id,n])=>el(id).addEventListener("click",()=>track("share-"+n)));
+el("shareNative").onclick=async()=>{track("share-tap-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");
+  let canFiles=false;try{canFiles=!!(navigator.canShare&&navigator.canShare({files:[await cardFile()]}));}catch(e){}
+  if(canFiles&&touch()){try{await nativeShare();return;}catch(e){if(e&&e.name==="AbortError")return;}}
+  el("moreShare").hidden=!canFiles;el("shareMenu").hidden=!el("shareMenu").hidden;};
+el("moreShare").onclick=async()=>{try{await nativeShare();}catch(e){if(!(e&&e.name==="AbortError"))shareNote("Your browser couldn't open its share menu. Use one of the options above.");}};
+el("copyImg").onclick=async()=>{track("copy-image");try{const b=await cardBlob();await navigator.clipboard.write([new ClipboardItem({"image/png":b})]);shareNote("Image copied. Paste it into your post.");}
+  catch(e){shareNote("This browser can't copy images. Use Save image instead.");}};
+el("shareSave").onclick=async()=>{track("save-image-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");
+  try{const b=await cardBlob();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="my-attention-map.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+    shareNote(touch()?"Saved. If your phone didn't save it, press and hold the image and choose Save.":"Saved to your downloads as my-attention-map.png.");}
+  catch(e){shareNote("Couldn't save here. Right-click the image and choose Save image as.");}};
 const un=el("userName");un.value=state.userName||"";un.oninput=()=>{state.userName=un.value;save();drawCard();};
 document.querySelectorAll(".sharehead .chip").forEach(b=>b.onclick=()=>{cardFmt=b.dataset.f;document.querySelectorAll(".sharehead .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));drawCard();});
 const _render=render;render=function(){_render();drawCard();};
