@@ -15,6 +15,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#15212A">
+<script data-goatcounter="https://attentioneconomix.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <style>html{-webkit-text-size-adjust:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -214,7 +215,7 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
     <div class="movebox" id="plan"></div>
   </section>
 
-  <footer>How it works: every statement nudges one of three scores, focus, drive or freedom. Mental load adds up how hard a task, person or place pulls on you, whichever way it pulls. Your answers stay on this device.<br><br>A Phractl tool. More on attention, systems and growth at <a href="https://phractl.com" target="_blank" rel="noopener">phractl.com</a>.</footer>
+  <footer>How it works: every statement nudges one of three scores, focus, drive or freedom. Mental load adds up how hard a task, person or place pulls on you, whichever way it pulls. Your answers stay on this device.<br><br>A Phractl tool. More on attention, systems and growth at <a href="https://phractl.com" target="_blank" rel="noopener" onclick="track('to-phractl')">phractl.com</a>.</footer>
 </div>
 
 <script>
@@ -226,6 +227,8 @@ const ITEMS=[
   {k:"back",  t:"I can do this on autopilot.", p:"I can deal with them on autopilot.", l:"I'm on autopilot when I'm there."},
   {k:"vol",   t:"I do this because I choose to.", p:"I spend time with them because I choose to.", l:"I go there because I choose to."}
 ];
+const _sent={};
+function track(name,once){try{if(once){if(_sent[name])return;_sent[name]=1;}if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:"event/"+name,title:name,event:true});}catch(e){}}
 const isP=t=>t.kind==="person";
 const verb=n=>/\band\b|&/i.test(n)||(/s$/i.test(n)&&!/(ss|us|is)$/i.test(n))?"are":"is";
 const isL=t=>t.kind==="place";
@@ -363,7 +366,7 @@ function renderTasks(){
   f.innerHTML=`<span class="kinds" role="group" aria-label="What are you adding?">${["task","person","place"].map(k=>`<button type="button" data-k="${k}" aria-pressed="${k===ak}">${k[0].toUpperCase()+k.slice(1)}</button>`).join("")}</span><input id="newItem" placeholder="Add a ${ak}, ${PH[ak]}" maxlength="40" aria-label="Name"><button class="btn" type="submit">Add</button>`;
   f.querySelectorAll(".kinds button").forEach(b=>b.onclick=()=>{state.addKind=b.dataset.k;const v=f.querySelector("input").value;renderTasks();const n=el("newItem");n.value=v;n.focus();});
   f.onsubmit=e=>{e.preventDefault();const v=f.querySelector("input").value.trim();if(!v)return;
-    state.example=false;state.tasks.push({id:"c"+Date.now(),kind:ak,name:v,ans:[null,null,null,null,null,null]});state.cur=state.tasks.length-1;render();};
+    track("added-"+ak);state.example=false;state.tasks.push({id:"c"+Date.now(),kind:ak,name:v,ans:[null,null,null,null,null,null]});state.cur=state.tasks.length-1;render();};
   box.prepend(Object.assign(document.createElement("div"),{className:"brk"}));box.prepend(f);
   el("exampleNote").hidden=!state.example;
 }
@@ -382,7 +385,7 @@ function renderQuestions(){
     for(let v=1;v<=5;v++){const id=`q${i}v${v}`;s+=`<input type="radio" name="q${i}" id="${id}" value="${v}" ${t.ans[i]===v?"checked":""}><label for="${id}">${SCALE[v-1]}</label>`;}
     s+=`</div>`;
     d.innerHTML=s;
-    d.querySelectorAll("input").forEach(r=>r.onchange=()=>{t.ans[i]=+r.value;state.example=false;el("exampleNote").hidden=true;renderMap();renderTasks();renderSummary();save();});
+    d.querySelectorAll("input").forEach(r=>r.onchange=()=>{t.ans[i]=+r.value;track("started",1);if(state.tasks.filter(x=>taskDims(x)).length>=2)track("map-complete",1);state.example=false;el("exampleNote").hidden=true;renderMap();renderTasks();renderSummary();save();});
     q.appendChild(d);
   });
   el("prevBtn").disabled=state.cur===0;
@@ -503,10 +506,10 @@ function renderSummary(){
   renderPlan(done);
 }
 function render(){renderTasks();renderQuestions();renderMap();renderSummary();save();}
-el("toShare").onclick=()=>{drawCard();el("shareCard").scrollIntoView({behavior:"smooth",block:"start"});};
+el("toShare").onclick=()=>{track("share-jump");drawCard();el("shareCard").scrollIntoView({behavior:"smooth",block:"start"});};
 el("prevBtn").onclick=()=>{if(state.cur>0){state.cur--;render();}};
 el("nextBtn").onclick=()=>{if(state.cur<state.tasks.length-1){state.cur++;render();}else el("t-sum").scrollIntoView({behavior:"smooth"});};
-el("clearBtn").onclick=()=>{state.tasks=[];state.example=false;state.cur=0;render();const n=el("newItem");if(n)n.focus();};
+el("clearBtn").onclick=()=>{track("clear-examples");state.tasks=[];state.example=false;state.cur=0;render();const n=el("newItem");if(n)n.focus();};
 /* ---------- share card ---------- */
 let cardFmt="post";
 const CARD={bg:"#EDF0EE",surface:"#F8FAF9",ink:"#15212A",muted:"#5B6870",line:"#CCD5D2",task:"#1F4FD8",person:"#C2366F",place:"#11806A",warm:"#C77A0A"};
@@ -555,11 +558,11 @@ function drawCard(){
 function cardTitle(){const n=(state.userName||"").trim();return n?`${n}${/s$/i.test(n)?"’":"’s"} attention map`:"My attention map";}
 function cardBlob(){return new Promise(r=>el("card").toBlob(r,"image/png"));}
 function shareNote(m){const n=el("shareNote");n.textContent=m;n.hidden=!m;}
-el("shareNative").onclick=async()=>{shareNote("");try{const b=await cardBlob();const f=new File([b],"my-attention-map.png",{type:"image/png"});
-  if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:cardTitle(),text:"Mapped my attention with @phractl. Who's spending yours?",url:"https://"+SITE});}
+el("shareNative").onclick=async()=>{track("share-tap-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");try{const b=await cardBlob();const f=new File([b],"my-attention-map.png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){track("share-sheet-open");await navigator.share({files:[f],title:cardTitle(),text:"Mapped my attention with @phractl. Who's spending yours?",url:"https://"+SITE});}
   else{shareNote("Your browser can't share images directly. Use Save image and post it from your photos.");}}
   catch(e){if(e&&e.name==="AbortError")return;shareNote("Sharing isn't available in this preview. It will work on phractl.com.");}};
-el("shareSave").onclick=async()=>{shareNote("");try{const b=await cardBlob();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="my-attention-map.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+el("shareSave").onclick=async()=>{track("save-image-"+cardFmt);if(state.userName)track("named-card",1);shareNote("");try{const b=await cardBlob();const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="my-attention-map.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
   shareNote("If nothing downloaded, saving is blocked in this preview. It will work on phractl.com. On a phone you can also press and hold the image.");}catch(e){shareNote("Saving isn't available in this preview. It will work on phractl.com.");}};
 const un=el("userName");un.value=state.userName||"";un.oninput=()=>{state.userName=un.value;save();drawCard();};
 document.querySelectorAll(".sharehead .chip").forEach(b=>b.onclick=()=>{cardFmt=b.dataset.f;document.querySelectorAll(".sharehead .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));drawCard();});
