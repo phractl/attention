@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://attentioneconomix.com/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://attentioneconomix.com/">
-<meta property="og:title" content="Time gets tracked. Attention doesn't.">
+<meta property="og:title" content="Time gets tracked. Attention doesn't. Map yours.">
 <meta property="og:description" content="Map the tasks, people and places in your week. Find your sweet spots, your energy drains and your pain in the arse.">
 <meta property="og:image" content="https://attentioneconomix.com/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -158,7 +158,7 @@ footer{color:var(--muted);font-size:13px;max-width:70ch}
     <div class="brand">@phractl · attention map</div>
     <h1>Where does your <em>attention</em> actually go?</h1>
     <p class="lede">Add the tasks, people and places that take up your attention, and answer six quick statements about each. You'll see how much focus each one takes, whether it brings you pleasure or pressure, and whether you chose it or it chose you.</p>
-    <p class="why"><b>Why it matters.</b> Time gets tracked. Attention doesn't. It's your most expensive resource, and a lot of it goes to things you never chose.</p>
+    <p class="why"><b>Why it matters.</b> Time gets tracked. Attention doesn't. It's your most expensive resource, and a lot of it goes to things you never chose. Map yours.</p>
   </header>
 
   <section class="card" aria-labelledby="t-tasks">
@@ -566,18 +566,19 @@ function drawCard(){
   const zc={"Sweet spot":CARD.task,"Worthwhile duty":CARD.warm,"Self-made pressure":CARD.warm,"Energy drain":"#B43C3C","Pain in the arse":CARD.pain};
   let y=my+ms+(story?120:100);const lh=story?62:52,zf=story?32:27;
   zones.forEach(z=>{const names=items.filter(r=>zone(r.d,r.t).n===z).map(r=>r.t.name);if(!names.length)return;
-    if(y>Ht-(story?170:120))return;
+    if(y>Ht-(story?210:150))return;
     ctx.font=`700 ${zf}px ${FONT_D}`;ctx.fillStyle=zc[z];const lab=z+":";ctx.fillText(lab,pad,y);
     const lw=ctx.measureText(lab).width+14;ctx.font=`400 ${zf}px ${FONT_B}`;ctx.fillStyle=CARD.ink;ctx.fillText(fitText(ctx,names.join(", "),Wd-2*pad-lw),pad+lw,y);y+=lh;});
   if(!items.length){ctx.font=`400 ${zf}px ${FONT_B}`;ctx.fillStyle=CARD.muted;ctx.fillText("Answer a few questions to fill your map.",pad,y);}
-  ctx.fillStyle=CARD.ink;ctx.fillRect(0,Ht-(story?120:96),Wd,story?120:96);
-  ctx.fillStyle=CARD.bg;ctx.font=`500 30px ${FONT_D}`;ctx.fillText("Time gets tracked. Attention doesn't.",pad,Ht-(story?48:38));
-  ctx.textAlign="right";ctx.font=`500 ${story?28:24}px ${FONT_M}`;ctx.fillText(SITE,Wd-pad,Ht-(story?48:38));ctx.textAlign="left";
+  const fh=story?160:128;ctx.fillStyle=CARD.ink;ctx.fillRect(0,Ht-fh,Wd,fh);
+  const tl="Time gets tracked. Attention doesn't. ";ctx.font=`500 ${story?34:30}px ${FONT_D}`;ctx.fillStyle=CARD.bg;ctx.fillText(tl,pad,Ht-fh+(story?66:54));const tw=ctx.measureText(tl).width;
+  ctx.fillStyle="#9DB4FF";ctx.font=`700 ${story?34:30}px ${FONT_D}`;ctx.fillText("Map yours.",pad+tw,Ht-fh+(story?66:54));
+  ctx.fillStyle="#93A2AA";ctx.font=`500 ${story?26:22}px ${FONT_M}`;ctx.fillText(SITE,pad,Ht-fh+(story?116:96));
 }
 function cardTitle(){const n=(state.userName||"").trim();return n?`${n}${/s$/i.test(n)?"’":"’s"} attention map`:"My attention map";}
 function cardBlob(){return new Promise(r=>el("card").toBlob(r,"image/png"));}
 function shareNote(m){const n=el("shareNote");n.textContent=m;n.hidden=!m;}
-const SHARE_TEXT="Mapped my attention with @phractl. Time gets tracked. Attention doesn't.",SHARE_URL="https://"+SITE+"/";
+const SHARE_TEXT="Mapped my attention with @phractl. Time gets tracked. Attention doesn't. Map yours.",SHARE_URL="https://"+SITE+"/";
 async function cardFile(){const b=await cardBlob();return new File([b],"my-attention-map.png",{type:"image/png"});}
 const touch=()=>window.matchMedia&&matchMedia("(pointer:coarse)").matches;
 async function nativeShare(){const f=await cardFile();track("share-sheet-open");await navigator.share({files:[f],title:cardTitle(),text:SHARE_TEXT,url:SHARE_URL});}
