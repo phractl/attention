@@ -9,7 +9,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://attentioneconomix.com/">
 <meta property="og:title" content="Time gets tracked. Attention doesn't. Map yours.">
-<meta property="og:description" content="Map the tasks, people and places in your week. Find your sweet spots, your energy drains and your pain in the arse.">
+<meta property="og:description" content="Map the tasks, people and places that take your attention. Find your sweet spots, your energy drains and your pain in the arse.">
 <meta property="og:image" content="https://attentioneconomix.com/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -298,7 +298,7 @@ const MOVES={
   "Worthwhile duty":[
     ["Get ahead of deadlines","Pressure is what spoils tasks you enjoy. Plan the key dates early so it doesn't get rushed."],
     ["Take back some choice","Ask for a say in how or when you do it. More choice moves it towards your sweet spot."],
-    ["Define good enough","Decide what done looks like, so a task you like doesn't quietly take over the week."],
+    ["Define good enough","Decide what done looks like, so a task you like doesn't quietly take over your time."],
     ["Remember why you like it","Start sessions with the part you enjoy most to build momentum."]],
   "Self-made pressure":[
     ["Ask if you still need it","You chose it, so you can un-choose it. Check it still serves what you want."],
@@ -315,7 +315,7 @@ const MOVES_P={
   "Sweet spot":[
     ["Make regular time for them","Put something in the diary. Good relationships fade quietly when everything else is urgent."],
     ["Be fully there","Phone away, laptop shut. Undivided attention is what makes the time count."],
-    ["Tell them","Let them know they make your week better. It strengthens what you already have."],
+    ["Tell them","Let them know they make your days better. It strengthens what you already have."],
     ["Keep it free of obligation","Don't let favours and logistics take over the time you spend together."]],
   "Worthwhile duty":[
     ["Set a rhythm","Short, regular check-ins stop things piling up into stressful moments."],
@@ -361,7 +361,7 @@ const MOVES_L={
     ["Recover afterwards","Build in a walk or a quiet moment before your next thing."]]
 };
 function zone(d,t){
-  if(t&&isP(t)&&d.M<=-2&&d.L<=-2&&d.C>=0.75)return{n:"Pain in the arse",c:"pain",tipP:"You can't avoid them, they bring you mostly pressure, and they still demand your attention. The costliest kind of relationship in your week."};
+  if(t&&isP(t)&&d.M<=-2&&d.L<=-2&&d.C>=0.75)return{n:"Pain in the arse",c:"pain",tipP:"You can't avoid them, they bring you mostly pressure, and they still demand your attention. The costliest kind of relationship there is."};
   if(d.L>=0&&d.M>=0)return{n:"Sweet spot",c:"",tipL:"You choose to be there and you enjoy it. Places like this restore your attention.",tipP:"You choose to spend time with them and you enjoy it. These are the people who give you energy.",tip:"You chose it and you enjoy it. This is where your attention pays you back."};
   if(d.L<0&&d.M>=0)return{n:"Worthwhile duty",c:"pull",tipL:"You like it there, but you don't get to choose when you go.",tipP:"You get on, but you can't opt out. Pressure from outside can strain it.",tip:"You enjoy it, but it isn't optional. Deadlines can turn it into pressure."};
   if(d.L>=0&&d.M<0)return{n:"Self-made pressure",c:"pull",tipL:"You choose to go there, but it mostly feels like pressure.",tipP:"You keep this relationship going yourself, but it mostly feels like pressure.",tip:"You took it on yourself, and it mostly feels like pressure."};
